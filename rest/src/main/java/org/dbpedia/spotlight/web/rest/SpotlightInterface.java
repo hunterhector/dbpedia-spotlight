@@ -55,9 +55,7 @@ public class SpotlightInterface  {
         this.apiName = apiName;
     }
 
-    public List<DBpediaResourceOccurrence> process(String text, Spotter spotter, ParagraphDisambiguatorJ disambiguator) throws SearchException, InputException, SpottingException {
-
-        List<SurfaceFormOccurrence> spots = spotter.extract(new Text(text));
+    public List<DBpediaResourceOccurrence> disambiguate(List<SurfaceFormOccurrence> spots, ParagraphDisambiguatorJ disambiguator) throws SearchException, InputException, SpottingException {
         List<DBpediaResourceOccurrence> resources = new ArrayList<DBpediaResourceOccurrence>();
         if (spots.size()==0) return resources; // nothing to disambiguate
         try {
@@ -68,12 +66,56 @@ public class SpotlightInterface  {
         return resources;
     }
 
+    public boolean policyIsBlacklist(String policy) {
+        boolean blacklist = false;
+        if(policy.trim().equalsIgnoreCase("blacklist")) {
+            blacklist = true;
+            policy = "blacklist";
+        }
+        else {
+            policy = "whitelist";
+        }
+        return blacklist;
+    }
+
+    public void announce(String textString,
+                         double confidence,
+                         int support,
+                         String ontologyTypesString,
+                         String sparqlQuery,
+                         String policy,
+                         boolean coreferenceResolution,
+                         String clientIp,
+                         String spotterName,
+                         String disambiguatorName
+    ) {
+        LOG.info("******************************** Parameters ********************************");
+        LOG.info("API: " + getApiName());
+        LOG.info("client ip: " + clientIp);
+        LOG.info("text: " + textString);
+        LOG.info("text length in chars: " +textString.length());
+        LOG.info("confidence: "+String.valueOf(confidence));
+        LOG.info("support: "+String.valueOf(support));
+        LOG.info("types: "+ontologyTypesString);
+        LOG.info("sparqlQuery: "+ sparqlQuery);
+        LOG.info("policy: "+policyIsBlacklist(policy));
+        LOG.info("coreferenceResolution: "+String.valueOf(coreferenceResolution));
+        LOG.info("spotter: "+spotterName);
+        LOG.info("disambiguator: "+disambiguatorName);
+
+    }
+
+    public List<SurfaceFormOccurrence> spot(String spotterName, Text context) throws InputException, SpottingException {
+        Spotter spotter = Server.getSpotter(spotterName);
+        List<SurfaceFormOccurrence> spots = spotter.extract(context);
+        return spots;
+    }
 
     /**
      * Retrieves representation of an instance of org.dbpedia.spotlight.web.Annotation
      * @return an instance of java.lang.String
      */
-    public List<DBpediaResourceOccurrence> getOccurrences(String text,
+    public List<DBpediaResourceOccurrence> getOccurrences(String textString,
                                                           double confidence,
                                                           int support,
                                                           String ontologyTypesString,
@@ -85,56 +127,41 @@ public class SpotlightInterface  {
                                                           String disambiguatorName
                                                           ) throws SearchException, InputException, SpottingException {
 
-        LOG.info("******************************** Parameters ********************************");
-        LOG.info("API: " + getApiName());
-        boolean blacklist = false;
-        if(policy.trim().equalsIgnoreCase("blacklist")) {
-            blacklist = true;
-            policy = "blacklist";
-        }
-        else {
-            policy = "whitelist";
-        }
-        LOG.info("client ip: " + clientIp);
-        LOG.info("text: " + text);
-        LOG.info("text length in chars: "+text.length());
-        LOG.info("confidence: "+String.valueOf(confidence));
-        LOG.info("support: "+String.valueOf(support));
-        LOG.info("types: "+ontologyTypesString);
-        LOG.info("sparqlQuery: "+ sparqlQuery);
-        LOG.info("policy: "+policy);
-        LOG.info("coreferenceResolution: "+String.valueOf(coreferenceResolution));
-        LOG.info("spotter: "+spotterName);
-        LOG.info("disambiguator: "+disambiguatorName);
+        boolean blacklist = policyIsBlacklist(policy);
 
-        if (text.trim().equals("")) {
+        announce(textString,confidence,support,ontologyTypesString,sparqlQuery,policy,coreferenceResolution,clientIp,spotterName,disambiguatorName);
+
+        // Get input text
+        if (textString.trim().equals("")) {
             throw new InputException("No text was specified in the &text parameter.");
         }
+        Text context = new Text(textString);
 
+        // Find spots to annotate/disambiguate
+        List<SurfaceFormOccurrence> spots = spot(spotterName,context);
+
+        // Call annotation or disambiguation
+        int maxLengthForOccurrenceCentric = 1200; //TODO configuration
+        if (disambiguatorName.equals(SpotlightConfiguration.DisambiguationPolicy.Default.name())
+                && textString.length() > maxLengthForOccurrenceCentric) {
+            disambiguatorName = SpotlightConfiguration.DisambiguationPolicy.Document.name();
+            LOG.info(String.format("Text length > %d. Using %s to disambiguate.",maxLengthForOccurrenceCentric,disambiguatorName));
+        }
+        ParagraphDisambiguatorJ disambiguator = Server.getDisambiguator(disambiguatorName);
+        List<DBpediaResourceOccurrence> occList = disambiguate(spots, disambiguator);
+
+        // Linking / filtering
         List<OntologyType> ontologyTypes = new ArrayList<OntologyType>();
         String types[] = ontologyTypesString.trim().split(",");
         for (String t : types){
             if (!t.trim().equals("")) ontologyTypes.add(Factory.ontologyType().fromQName(t.trim()));
         }
 
-        int maxLengthForOccurrenceCentric = 1200; //TODO configuration
-        if (disambiguatorName==SpotlightConfiguration.DisambiguationPolicy.Default.name()
-                && text.length() > maxLengthForOccurrenceCentric) {
-            disambiguatorName = SpotlightConfiguration.DisambiguationPolicy.Document.name();
-            LOG.info(String.format("Text length > %d. Using %s to disambiguate.",maxLengthForOccurrenceCentric,disambiguatorName));
-        }
-
-        Spotter spotter = Server.getSpotter(spotterName);
-
-        ParagraphDisambiguatorJ disambiguator = Server.getDisambiguator(disambiguatorName);
-
-        // Call annotation or disambiguation
-        List<DBpediaResourceOccurrence> occList = process(text, spotter, disambiguator);
-
         // Filter: Old monolithic way
         CombineAllAnnotationFilters annotationFilter = new CombineAllAnnotationFilters(Server.getConfiguration());
+        PercentageOfSecondFilter anotherFilter = new PercentageOfSecondFilter(confidence);
         occList = annotationFilter.filter(occList, confidence, support, ontologyTypes, sparqlQuery, blacklist, coreferenceResolution);
-
+        occList = anotherFilter.filterOccs(occList);
         // Filter: TODO run occurrences through a list of annotation filters (which can be passed by parameter)
         // Map<String,AnnotationFilter> annotationFilters = buildFilters(occList, confidence, support, dbpediaTypes, sparqlQuery, blacklist, coreferenceResolution);
         //AnnotationFilter annotationFilter = annotationFilters.get(CombineAllAnnotationFilters.class.getSimpleName());
@@ -149,7 +176,46 @@ public class SpotlightInterface  {
         return occList;
     }
 
+    /**
+     *
+     * Read in the content passed by both &url and &text in query, return the text to be further processed
+     * &text got higher priority, it will be returned if not empty
+     * if &text is not empty, the main content of the webpage pointed by the URL will be returned.
+     * @param text text by the &text query
+     * @param inUrl url by the &url query
+     * @return String about the main content extracted from the website linked from the URL
+     * @throws MalformedURLException
+     * @throws BoilerpipeProcessingException
+     * @throws InputException Thrown when both input from &text and &url are empty
+     */
+    private String getTextToProcess(String text, String inUrl) throws InputException {
+        String textToProcess = "";
+        if (!text.equals("")){
+            textToProcess = text;
+        }else if (!inUrl.equals("")) {
+            LOG.info("Parsing URL to get main content");
+            URL url = null;
+            try {
+                url = new URL(inUrl);
+                textToProcess = ArticleExtractor.INSTANCE.getText(url);
+            } catch (MalformedURLException e) {
+               // e.printStackTrace();
+                LOG.error("Input URL is not valid");
+                textToProcess = "";
+            } catch (BoilerpipeProcessingException e) {
+                e.printStackTrace();
+                LOG.error("Boilerpipe Cannot process the web page");
+                textToProcess = "";
+            }
+
+        }else{
+            throw new InputException("No input was specified in the &text nor the &url parameter.");
+        }
+        return textToProcess;
+    }
+
     public String getHTML(String text,
+                          String inUrl,
                           double confidence,
                           int support,
                           String dbpediaTypesString,
@@ -161,9 +227,11 @@ public class SpotlightInterface  {
                           String disambiguator
     ) throws Exception {
         String result;
+        String textToProcess = getTextToProcess(text, inUrl);
+
         try {
-            List<DBpediaResourceOccurrence> occs = getOccurrences(text, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution, clientIp, spotter, disambiguator);
-            result = outputManager.makeHTML(text, occs);
+            List<DBpediaResourceOccurrence> occs = getOccurrences(textToProcess, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution, clientIp, spotter, disambiguator);
+            result = outputManager.makeHTML(textToProcess, occs);
         }
         catch (InputException e) { //TODO throw exception up to Annotate for WebApplicationException to handle.
             LOG.info("ERROR: "+e.getMessage());
@@ -174,32 +242,8 @@ public class SpotlightInterface  {
         return result;
     }
 
-    public String getHTMLFromURL(String inUrl,
-                                 double confidence,
-                                 int support,
-                                 String dbpediaTypesString,
-                                 String sparqlQuery,
-                                 String policy,
-                                 boolean coreferenceResolution,
-                                 String clientIp,
-                                 String spotter,
-                                 String disambiguator
-    ) throws Exception {
-        String result;
-        String text;
-
-        LOG.info("Getting webpage content from URL");
-        LOG.debug("****************************************************************");
-
-        URL url = new URL(inUrl);
-        text = ArticleExtractor.INSTANCE.getText(url);
-
-        result = getHTML(text,confidence,support,dbpediaTypesString,sparqlQuery,policy,coreferenceResolution,clientIp,spotter,disambiguator);
-
-        return result;
-    }
-
     public String getRDFa(String text,
+                          String inUrl,
                           double confidence,
                           int support,
                           String dbpediaTypesString,
@@ -211,9 +255,11 @@ public class SpotlightInterface  {
                           String disambiguator
     ) throws Exception {
         String result;
+        String textToProcess = getTextToProcess(text, inUrl);
+
         try {
-            List<DBpediaResourceOccurrence> occs = getOccurrences(text, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution, clientIp, spotter, disambiguator);
-            result = outputManager.makeRDFa(text, occs);
+            List<DBpediaResourceOccurrence> occs = getOccurrences(textToProcess, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution, clientIp, spotter, disambiguator);
+            result = outputManager.makeRDFa(textToProcess, occs);
         }
         catch (InputException e) { //TODO throw exception up to Annotate for WebApplicationException to handle.
             LOG.info("ERROR: "+e.getMessage());
@@ -225,6 +271,7 @@ public class SpotlightInterface  {
     }
 
     public String getXML(String text,
+                         String inUrl,
                          double confidence,
                          int support,
                          String dbpediaTypesString,
@@ -236,9 +283,11 @@ public class SpotlightInterface  {
                          String disambiguator
    ) throws Exception {
         String result;
+        String textToProcess = getTextToProcess(text, inUrl);
+
 //        try {
-            List<DBpediaResourceOccurrence> occs = getOccurrences(text, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution, clientIp, spotter,disambiguator);
-            result = outputManager.makeXML(text, occs, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution);
+            List<DBpediaResourceOccurrence> occs = getOccurrences(textToProcess, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution, clientIp, spotter,disambiguator);
+            result = outputManager.makeXML(textToProcess, occs, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution);
 //        }
 //        catch (Exception e) { //TODO throw exception up to Annotate for WebApplicationException to handle.
 //            LOG.info("ERROR: "+e.getMessage());
@@ -252,6 +301,7 @@ public class SpotlightInterface  {
 
     //FIXME
     public String getCandidateXML(String text,
+                                  String inUrl,
                          double confidence,
                          int support,
                          String dbpediaTypesString,
@@ -263,14 +313,18 @@ public class SpotlightInterface  {
                          String disambiguator
    ) throws Exception {
         String result;
-        List<DBpediaResourceOccurrence> occs = getOccurrences(text, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution, clientIp, spotter,disambiguator);
-        result = outputManager.makeXML(text, occs, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution);
+
+        String textToProcess = getTextToProcess(text, inUrl);
+
+        List<DBpediaResourceOccurrence> occs = getOccurrences(textToProcess, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution, clientIp, spotter,disambiguator);
+        result = outputManager.makeXML(textToProcess, occs, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution);
         LOG.info("XML format");
         LOG.debug("****************************************************************");
         return result;
     }
 
     public String getJSON(String text,
+                          String inUrl,
                           double confidence,
                           int support,
                           String dbpediaTypesString,
@@ -282,7 +336,7 @@ public class SpotlightInterface  {
                           String disambiguator
     ) throws Exception {
         String result;
-        String xml = getXML(text, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution, clientIp, spotterName,disambiguator);
+        String xml = getXML(text,inUrl, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution, clientIp, spotterName,disambiguator);
         result = outputManager.xml2json(xml);
         LOG.info("JSON format");
         LOG.debug("****************************************************************");
