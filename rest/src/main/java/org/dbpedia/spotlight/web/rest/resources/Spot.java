@@ -56,7 +56,7 @@ public class Spot {
     // Annotation interface
     private static SpotlightInterface annotationInterface =  new SpotlightInterface("/spot");
 
-    
+
     @GET
     @Produces({MediaType.TEXT_XML,MediaType.APPLICATION_XML})
     public Response getXML(@DefaultValue(SpotlightConfiguration.DEFAULT_TEXT) @QueryParam("text") String text,

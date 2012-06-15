@@ -34,12 +34,9 @@ import org.dbpedia.spotlight.spot.Spotter;
 import org.dbpedia.spotlight.web.rest.Server;
 import org.dbpedia.spotlight.web.rest.ServerUtils;
 import org.dbpedia.spotlight.web.rest.output.Annotation;
-import org.dbpedia.spotlight.web.rest.output.OutputSerializer;
 import org.dbpedia.spotlight.web.rest.output.Resource;
 import org.dbpedia.spotlight.web.rest.output.Spot;
 
-import org.dbpedia.spotlight.model.SpotterConfiguration.SpotterPolicy;
-import org.dbpedia.spotlight.model.SpotlightConfiguration.DisambiguationPolicy;
 import scala.Enumeration;
 
 import javax.servlet.http.HttpServletRequest;
@@ -170,7 +167,7 @@ public class Candidates {
         String clientIp = request.getRemoteAddr();
 
         try {
-            String textToProcess = getTextToProcessed(text,inUrl);
+            String textToProcess = getTextToProcess(text, inUrl);
             Annotation a = getAnnotation(textToProcess, confidence, support, dbpediaTypes, sparqlQuery, policy, coreferenceResolution, spotter, disambiguatorName, clientIp);
             LOG.info("XML format");
             String content = a.toXML();
@@ -196,7 +193,7 @@ public class Candidates {
         String clientIp = request.getRemoteAddr();
 
         try {
-            String textToProcess = getTextToProcessed(text,inUrl);
+            String textToProcess = getTextToProcess(text, inUrl);
             Annotation a = getAnnotation(textToProcess, confidence, support, dbpediaTypes, sparqlQuery, policy, coreferenceResolution, spotter, disambiguatorName, clientIp);
             LOG.info("JSON format");
             String content = a.toJSON();
@@ -277,7 +274,7 @@ public class Candidates {
         return getJSON(text,inUrl,confidence,support,dbpediaTypes,sparqlQuery,policy,coreferenceResolution,spotter,disambiguatorName,request);
     }
 
-    private String getTextToProcessed(String text,String inUrl) throws MalformedURLException, BoilerpipeProcessingException, InputException {
+    private String getTextToProcess(String text, String inUrl) throws MalformedURLException, BoilerpipeProcessingException, InputException {
         String textToProcess = "";
         if (!text.equals("")){
             textToProcess = text;

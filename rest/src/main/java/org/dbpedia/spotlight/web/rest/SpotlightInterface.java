@@ -30,8 +30,6 @@ import org.dbpedia.spotlight.filter.annotations.CombineAllAnnotationFilters;
 import org.dbpedia.spotlight.filter.annotations.PercentageOfSecondFilter;
 import org.dbpedia.spotlight.model.*;
 import org.dbpedia.spotlight.spot.Spotter;
-import org.dbpedia.spotlight.model.SpotlightConfiguration.DisambiguationPolicy;
-import org.dbpedia.spotlight.model.SpotterConfiguration.SpotterPolicy;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -190,14 +188,26 @@ public class SpotlightInterface  {
      * @throws BoilerpipeProcessingException
      * @throws InputException Thrown when both input from &text and &url are empty
      */
-    private String getTextToProcessed(String text,String inUrl) throws MalformedURLException, BoilerpipeProcessingException, InputException {
+    private String getTextToProcess(String text, String inUrl) throws InputException {
         String textToProcess = "";
         if (!text.equals("")){
             textToProcess = text;
         }else if (!inUrl.equals("")) {
             LOG.info("Parsing URL to get main content");
-            URL url = new URL(inUrl);
-            textToProcess = ArticleExtractor.INSTANCE.getText(url);
+            URL url = null;
+            try {
+                url = new URL(inUrl);
+                textToProcess = ArticleExtractor.INSTANCE.getText(url);
+            } catch (MalformedURLException e) {
+               // e.printStackTrace();
+                LOG.error("Input URL is not valid");
+                textToProcess = "";
+            } catch (BoilerpipeProcessingException e) {
+                e.printStackTrace();
+                LOG.error("Boilerpipe Cannot process the web page");
+                textToProcess = "";
+            }
+
         }else{
             throw new InputException("No input was specified in the &text nor the &url parameter.");
         }
@@ -217,7 +227,7 @@ public class SpotlightInterface  {
                           String disambiguator
     ) throws Exception {
         String result;
-        String textToProcess = getTextToProcessed(text,inUrl);
+        String textToProcess = getTextToProcess(text, inUrl);
 
         try {
             List<DBpediaResourceOccurrence> occs = getOccurrences(textToProcess, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution, clientIp, spotter, disambiguator);
@@ -245,7 +255,7 @@ public class SpotlightInterface  {
                           String disambiguator
     ) throws Exception {
         String result;
-        String textToProcess = getTextToProcessed(text,inUrl);
+        String textToProcess = getTextToProcess(text, inUrl);
 
         try {
             List<DBpediaResourceOccurrence> occs = getOccurrences(textToProcess, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution, clientIp, spotter, disambiguator);
@@ -273,7 +283,7 @@ public class SpotlightInterface  {
                          String disambiguator
    ) throws Exception {
         String result;
-        String textToProcess = getTextToProcessed(text,inUrl);
+        String textToProcess = getTextToProcess(text, inUrl);
 
 //        try {
             List<DBpediaResourceOccurrence> occs = getOccurrences(textToProcess, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution, clientIp, spotter,disambiguator);
@@ -304,7 +314,7 @@ public class SpotlightInterface  {
    ) throws Exception {
         String result;
 
-        String textToProcess = getTextToProcessed(text,inUrl);
+        String textToProcess = getTextToProcess(text, inUrl);
 
         List<DBpediaResourceOccurrence> occs = getOccurrences(textToProcess, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution, clientIp, spotter,disambiguator);
         result = outputManager.makeXML(textToProcess, occs, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution);
