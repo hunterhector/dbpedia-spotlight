@@ -2,7 +2,6 @@
 -- And count the occurrences of the resource
 
 -- @param occPath	the path to occs.tsv or occs.uriSorted.tsv files outputted by ExtractOccsFromWikipedia
--- @param typesPath	the path to instance_type_en_nt
 -- @param outDir the path to output
 -- output format  uri, occ count, {list of occ id}, {list of type}, if occ id does not have para id and line id, it is a self occurrence
 
@@ -12,7 +11,7 @@ SET job.name OccurrencesCountedWithType;
 Register 'index_pig_udf.py' using jython as funcs;
 
 %default occPath occs.tsv
-%default typesPath instance_types_en.nt
+--%default typesPath instance_types_en.nt
 %default outDir . -- do not include slash at the end
 
 ------ LOADING AND CLEANING FOR OCCS ------
