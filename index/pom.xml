@@ -62,11 +62,11 @@
                             <id>indexer</id>
                             <mainClass>org.dbpedia.spotlight.lucene.index.IndexMergedOccurrences</mainClass>
                             <jvmArgs>
-                                <jvmArg>-Xmx14G</jvmArg>
+                                <jvmArg>-Xmx6G</jvmArg>
                             </jvmArgs>
                             <args>
-                                <arg>../conf/indexing-3.8.properties</arg>
-                                <arg>/data/spotlight/3.7/occs.uriSorted.tsv</arg>
+                                <arg>../conf/indexing.properties</arg>
+                                <arg>output/occs.uriSorted.tsv</arg>
                                 <arg>overwrite</arg>
                             </args>
                         </launcher>
@@ -108,7 +108,8 @@
                 </configuration>
             </plugin>
 
-            <plugin>
+<!--    Already install in parent pom
+                <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-install-plugin</artifactId>
                 <version>${maven.install.plugin.version}</version>
@@ -128,7 +129,7 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>-->
 
         </plugins>
     </build>
@@ -139,9 +140,6 @@
             <groupId>org.dbpedia.extraction</groupId>
             <artifactId>core</artifactId>
             <version>2.0-SNAPSHOT</version>
-            <!--TODO keep dependency on DEF minimal. Maybe just the core jar. -->
-            <scope>system</scope>
-            <systemPath>${basedir}/../lib/dbpedia-2.0-SNAPSHOT-jar-with-dependencies.jar</systemPath>
 
         </dependency>
 
