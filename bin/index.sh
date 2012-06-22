@@ -32,7 +32,7 @@ sort -t $'\t' -k2 output/occs.tsv >output/occs.uriSorted.tsv
 mvn scala:run -DmainClass=org.dbpedia.spotlight.lucene.index.IndexMergedOccurrences "-DaddArgs=$INDEX_CONFIG_FILE|output/occs.uriSorted.tsv"
 
 # (optional) make a backup copy of the index before you lose all the time you've put into this
-cp -R output/index /mnt/windows/Extra/Backup/index
+cp -R output/index /mnt/windows/Extra/Backup/output/index
 
 # (optional) preprocess surface forms however you want: produce acronyms, abbreviations, alternative spellings, etc.
 #            in the example below we scan paragraphs for uri->sf mappings that occurred together more than 3 times.
