@@ -107,6 +107,7 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory) extends ParagraphDi
     //TODO Could consider implement this method in ParagraphDisambiguatorJ
     // Actually this function could be the same for all disambiguators,
     // given that they all needs to implements bestK
+
     // return first from each candidate set
     bestK(paragraph, 5)
       .filter(kv =>

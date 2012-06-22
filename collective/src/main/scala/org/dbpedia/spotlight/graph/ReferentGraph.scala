@@ -40,11 +40,11 @@ class ReferentGraph(sf2Cands: Map[SurfaceFormOccurrence, List[DBpediaResource]])
   }
 
 
-  def buildWeightedArcList () {
+  def buildReferentArcList () {
 
   }
 
-  def buildWeightedGraph() {
+  def buildReferentGraph() {
 
   }
 

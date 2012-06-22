@@ -9,11 +9,81 @@
         <artifactId>spotlight</artifactId>
         <groupId>org.dbpedia.spotlight</groupId>
         <version>0.6</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>collective</artifactId>
     <packaging>jar</packaging>
     <name>DBpedia Spotlight Collective Disambiguation</name>
+
+    <properties>
+        <spotlight.basedir>${project.basedir}/..</spotlight.basedir>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+            <groupId>org.scala-tools</groupId>
+            <artifactId>maven-scala-plugin</artifactId>
+            <configuration>
+                <launchers>
+                <launcher>
+                    <id>makegraph</id>
+                    <mainClass>org.dbpedia.spotlight.graph.GraphMaker</mainClass>
+                    <jvmArgs>
+                        <jvmArg>-Xmx6G</jvmArg>
+                    </jvmArgs>
+                </launcher>
+                </launchers>
+            </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>${maven.install.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>install-law-jar</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>install-file</goal>
+                        </goals>
+                        <configuration>
+                            <groupId>it.unimi.dsi</groupId>
+                            <artifactId>law</artifactId>
+                            <version>2.1</version>
+                            <packaging>jar</packaging>
+                            <file>${spotlight.basedir}/lib/law-2.1.jar</file>
+                        </configuration>
+                    </execution>
+
+<!--                    <execution>
+                        <id>install-weighted-graph-jar</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>install-file</goal>
+                        </goals>
+                        <configuration>
+                            <groupId>it.unimi.dsi</groupId>
+                            <artifactId>weighted-graph</artifactId>
+                            <version>1.0</version>
+                            <packaging>jar</packaging>
+                            <file>${spotlight.basedir}/lib/graph_weighted-1.0.jar</file>
+                        </configuration>
+                    </execution>-->
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skipTests>false</skipTests>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>
@@ -59,11 +129,11 @@
             <version>2.1</version>
         </dependency>
 
-        <dependency>
+<!--        <dependency>
             <groupId>it.unimi.dsi</groupId>
             <artifactId>weighted-graph</artifactId>
             <version>1.0</version>
-        </dependency>
+        </dependency>-->
 
         <!-- Add dependencies for Spark and Bagel -->
 <!--        <dependency>
@@ -85,55 +155,5 @@
     </dependencies>
 
 
-    <build>
-        <sourceDirectory>src/main/scala</sourceDirectory>
-        <testSourceDirectory>src/test/scala</testSourceDirectory>
-        <plugins>
-            <plugin>
-                 <groupId>org.apache.maven.plugins</groupId>
-                 <artifactId>maven-install-plugin</artifactId>
-                 <version>${maven.install.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>install-law-jar</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                        <configuration>
-                            <groupId>it.unimi.dsi</groupId>
-                            <artifactId>law</artifactId>
-                            <version>2.1</version>
-                            <packaging>jar</packaging>
-                            <file>${basedir}/../lib/law-2.1.jar</file>
-                        </configuration>
-                    </execution>
-
-                    <execution>
-                        <id>install-weighted-graph-jar</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                        <configuration>
-                            <groupId>it.unimi.dsi</groupId>
-                            <artifactId>weighted-graph</artifactId>
-                            <version>1.0</version>
-                            <packaging>jar</packaging>
-                            <file>${basedir}/../lib/graph_weighted-1.0.jar</file>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <skipTests>false</skipTests>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
 </project>
