@@ -34,18 +34,18 @@ import org.dbpedia.spotlight.exceptions.SearchException
 object GraphBasedDisambiguatorRunner {
 
   def main(args: Array[String]) {
-    testGraphBasedDisambiguator("../conf/server.properties", "Default", "Document")
+    testGraphBasedDisambiguator("../conf/server.properties", "Default")
   }
 
-  def testGraphBasedDisambiguator(configFileName: String, spotterName: String, disambiguatorName: String) {
+  def testGraphBasedDisambiguator(configFileName: String, spotterName: String) {
     val config = new SpotlightConfiguration(configFileName)
     val factory = new SpotlightFactory(config)
 
     val spotterPolicy = SpotterPolicy.valueOf(spotterName)
     val spotter = factory.spotter(spotterPolicy)
 
-    val disambiguationPolicy = DisambiguationPolicy.valueOf(disambiguatorName)
-    val disambiguator = factory.disambiguator(disambiguationPolicy)
+    //TODO should be included in factory
+    val disambiguator = new ParagraphDisambiguatorJ(new GraphBasedDisambiguator(factory))
 
     val k = 5
     val occList = process(passage, spotter, disambiguator, k)

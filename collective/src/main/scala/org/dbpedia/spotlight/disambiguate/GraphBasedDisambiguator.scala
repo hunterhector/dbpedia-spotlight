@@ -19,9 +19,8 @@
 package org.dbpedia.spotlight.disambiguate
 
 import org.apache.commons.logging.LogFactory
-import com.officedepot.cdap2.collection.CompactHashSet
 import org.dbpedia.spotlight.lucene.LuceneManager
-import java.io.File
+import java.io.{ByteArrayInputStream, File}
 import org.dbpedia.spotlight.lucene.similarity.{CachedInvCandFreqSimilarity, JCSTermCache}
 import org.dbpedia.spotlight.lucene.search.{MergedOccurrencesContextSearcher, LuceneCandidateSearcher}
 import scala.collection.JavaConverters._
@@ -29,6 +28,12 @@ import org.dbpedia.spotlight.exceptions.{ItemNotFoundException, SearchException,
 import org.dbpedia.spotlight.exceptions.SearchException
 import org.dbpedia.spotlight.model._
 import org.dbpedia.spotlight.graph.ReferentGraph
+import org.apache.lucene.index.Term
+import org.dbpedia.spotlight.lucene.LuceneManager.DBpediaResourceField
+import org.apache.lucene.search.similar.MoreLikeThis
+import com.officedepot.cdap2.collection.CompactHashSet
+import org.apache.lucene.search.ScoreDoc
+import it.unimi.dsi.webgraph.labelling.ArcLabelledImmutableGraph
 
 /**
  * Created with IntelliJ IDEA.
@@ -92,6 +97,22 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory) extends ParagraphDi
     this.getClass.getSimpleName
   }
 
+  def query(text: Text, allowedUris: Array[DBpediaResource]) = {
+    LOG.debug("Setting up query")
+    val context = if (text.text.size < 250) text.text.concat(" "+text.text) else text.text
+
+    val filter = new org.apache.lucene.search.TermsFilter()
+    allowedUris.foreach( u => filter.addTerm(new Term(DBpediaResourceField.URI.toString,u.uri)))
+
+    val mlt = new MoreLikeThis(contextSearcher.mReader)
+    mlt.setFieldNames(Array(DBpediaResourceField.CONTEXT.toString))
+    mlt.setAnalyzer(contextLuceneManager.defaultAnalyzer)
+
+    val inputStream = new ByteArrayInputStream(context.getBytes("UTF-8"));
+    val query = mlt.like(inputStream)
+    contextSearcher.getHits(query, allowedUris.size, 50000, filter)
+  }
+
   /**
    * Executes disambiguation per paragraph (collection of occurrences).
    * Can be seen as a classification task: unlabeled instances in, labeled instances out.
@@ -134,23 +155,79 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory) extends ParagraphDi
 
     if (paragraph.occurrences.size == 0) return Map[SurfaceFormOccurrence, List[DBpediaResourceOccurrence]]()
 
-    val sf2Candidates = paragraph.occurrences.foldLeft(
+    val scoredSf2Cands = getScoredCandidates(paragraph)
+
+    val sfImportances = getSurfaceImportances(paragraph)
+
+    //TODO: must be in config
+    val offline = true
+    val baseDir = "graph/"
+    val occGraphBasename = baseDir+"occs/occsGraph"
+    val cooccGraphBasename = baseDir+"co-occs/cooccsGraph"
+
+    val occGraph: ArcLabelledImmutableGraph = if (offline) ArcLabelledImmutableGraph.loadOffline(occGraphBasename) else ArcLabelledImmutableGraph.loadSequential(occGraphBasename)
+    val cooccGraph: ArcLabelledImmutableGraph = if (offline) ArcLabelledImmutableGraph.loadOffline(cooccGraphBasename) else ArcLabelledImmutableGraph.loadSequential(cooccGraphBasename)
+
+    val rGraph = new ReferentGraph(scoredSf2Cands, sfImportances, occGraph, cooccGraph)
+
+    null
+  }
+
+  def getScoredCandidates(paragraph: Paragraph) : Map[SurfaceFormOccurrence,List[DBpediaResourceOccurrence]]  = {
+    val allCandidates = CompactHashSet[DBpediaResource];
+
+    val sf2CandidatesMap = paragraph.occurrences.foldLeft(
       Map[SurfaceFormOccurrence, List[DBpediaResource]]()
     )(
       (sf2Cands, sfOcc) => {
         val cands = getCandidates(sfOcc.surfaceForm).toList
         //debug
-        cands.foreach(println)
+        cands.foreach(r => allCandidates.add(r))
         sf2Cands + (sfOcc -> cands)
       })
 
-    val graph = new ReferentGraph(sf2Candidates)
+    var hits : Array[ScoreDoc] = null
 
-    null
+    try {
+      hits = query(paragraph.text, allCandidates.toArray)
+    } catch {
+      case e: Exception => throw new SearchException(e);
+      case r: RuntimeException => throw new SearchException(r);
+      case _ => LOG.error("Unknown really scary error happened. You can cry now.")
+    }
+
+    val scores = hits
+      .foldRight(Map[String,(DBpediaResource,Double)]())((hit,acc) => {
+      val resource: DBpediaResource = contextSearcher.getDBpediaResource(hit.doc, Array(LuceneManager.DBpediaResourceField.URI.toString)) //this method returns resource.support=c(r)
+      val score = hit.score.toDouble
+      acc + (resource.uri -> (resource,score))
+    })
+
+    //build up a map for compatible edges
+    val scoredSf2Cands = sf2CandidatesMap.foldLeft(Map[SurfaceFormOccurrence,List[DBpediaResourceOccurrence]]()) (( edgesMap, sftoCands) => {
+      val sf = sftoCands._1
+      val cands = sftoCands._2
+      val candOccs = cands.map( shallowResource => {
+        val (resource: DBpediaResource, supportConfidence: (Int, Double)) = scores.get(shallowResource.uri) match{
+          case Some((fullResource, contextualScore)) => {
+            (fullResource,(fullResource.support,contextualScore))
+          }
+          case _ => (shallowResource,(shallowResource.support,0.0))
+        }
+        Factory.DBpediaResourceOccurrence.from(sf,resource, supportConfidence)
+      })
+      edgesMap + (sf -> candOccs)
+    })
+
+    scoredSf2Cands
   }
 
+  //could be represented by TF.ICF, TF.IDF or Normalized ones
+  //we implement TF.ICF here, because it is more likely to capture the importance of a surface form
+  def getSurfaceImportances(paragraph: Paragraph): Map[SurfaceFormOccurrence,Double] = {
 
-  //Quite a mess of conversion between Java Hashset, Immutable Set and mutable Set
+  }
+
   def getCandidates(sf: SurfaceForm): Set[DBpediaResource] = {
     var candidates = new java.util.HashSet[DBpediaResource]().asScala.toSet
 

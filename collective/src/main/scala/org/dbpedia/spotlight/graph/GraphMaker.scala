@@ -22,6 +22,7 @@ object GraphMaker {
     val uriMapFile = new File(baseDir+"uriMap.tsv")
 
     //Generating for occurrences files
+    //TODO: must be in config
     val occSubDir = baseDir+"occs/"
     createDir(occSubDir)
     val occsSrcFile = new File("/home/hector/Researches/nlp/DBpedia_Spotlight/dbpedia-spotlight/index/output/occs.tsv")
@@ -42,6 +43,7 @@ object GraphMaker {
     GraphUtils.storeWeightedGraph(ocwg,occBaseName)
 
     //Generating for co-occurrences files
+    //TODO: must be in config
     val cooccSubDir = baseDir+"co-occs/"
     createDir(cooccSubDir)
     val cooccsSrcFile = new File("/home/hector/Researches/nlp/DBpedia_Spotlight/dbpedia-spotlight/index/output/co-occs-count.tsv")

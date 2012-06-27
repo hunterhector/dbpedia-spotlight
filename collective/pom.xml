@@ -34,6 +34,13 @@
                         <jvmArg>-Xmx6G</jvmArg>
                     </jvmArgs>
                 </launcher>
+                <launcher>
+                    <id>disambiguate</id>
+                    <mainClass>org.dbpedia.spotlight.disambiguate.GraphBasedDisambiguatorRunner</mainClass>
+                    <jvmArgs>
+                        <jvmArg>-Xmx6G</jvmArg>
+                    </jvmArgs>
+                </launcher>
                 </launchers>
             </configuration>
             </plugin>
@@ -57,21 +64,6 @@
                             <file>${spotlight.basedir}/lib/law-2.1.jar</file>
                         </configuration>
                     </execution>
-
-<!--                    <execution>
-                        <id>install-weighted-graph-jar</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                        <configuration>
-                            <groupId>it.unimi.dsi</groupId>
-                            <artifactId>weighted-graph</artifactId>
-                            <version>1.0</version>
-                            <packaging>jar</packaging>
-                            <file>${spotlight.basedir}/lib/graph_weighted-1.0.jar</file>
-                        </configuration>
-                    </execution>-->
                 </executions>
             </plugin>
 

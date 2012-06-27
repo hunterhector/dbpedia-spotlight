@@ -1,10 +1,9 @@
 package org.dbpedia.spotlight.graph
 
 import org.apache.commons.logging.LogFactory
-import java.io.{PrintStream, FileOutputStream, OutputStream, File}
+import java.io.{PrintStream, FileOutputStream, File}
 import collection.mutable.{HashMap,HashSet}
 import io.Source
-import org.dbpedia.spotlight.model.DBpediaResource
 
 /**
  * Created with IntelliJ IDEA.

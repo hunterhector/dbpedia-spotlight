@@ -3,16 +3,12 @@ package org.dbpedia.spotlight.graph
 import org.apache.commons.logging.LogFactory
 import scala.io.Source
 import it.unimi.dsi.webgraph.labelling._
-import collection.mutable.Map
 import scala.Predef._
-import java.io.{File, PrintStream, FileOutputStream, OutputStream}
-import java.util.NoSuchElementException
+import java.io.File
 import java.lang.IllegalArgumentException
 import it.unimi.dsi.webgraph.{ImmutableGraph, BVGraph, ArrayListMutableGraph}
 import it.unimi.dsi.webgraph.examples.IntegerTriplesArcLabelledImmutableGraph
 import es.yrbcn.graph.weighted._
-import org.dbpedia.spotlight.model.DBpediaResource
-
 
 /**
  * Created with IntelliJ IDEA.
@@ -79,6 +75,14 @@ object GraphUtils {
     val arcArray = Source.fromFile(integerListFile).getLines().filterNot(line => line.trim() == "").filter(line => line.split("\t").length >= 3).map(line => line.split("\t").map(str => str.toFloat.toInt)).toArray
 
     val alg : ArcLabelledImmutableGraph = new IntegerTriplesArcLabelledImmutableGraph(arcArray)
+
+    LOG.info(String.format("Done. Created a Arc Labelled Graph with %s nodes",alg.numNodes().toString))
+
+    alg
+  }
+
+  def buildArcLabelledGraph (integerList: Array[Array[Int]]) : ArcLabelledImmutableGraph = {
+    val alg : ArcLabelledImmutableGraph = new IntegerTriplesArcLabelledImmutableGraph(integerList)
 
     LOG.info(String.format("Done. Created a Arc Labelled Graph with %s nodes",alg.numNodes().toString))
 

@@ -1,11 +1,9 @@
 package org.dbpedia.spotlight.graph
 
-import it.unimi.dsi.law.rank.{PageRank, PageRankPowerMethod}
-import it.unimi.dsi.webgraph.ImmutableGraph
-import it.unimi.dsi.webgraph.ArrayListMutableGraph
-
 import org.apache.commons.logging.LogFactory
-import org.dbpedia.spotlight.model.{DBpediaResource, SurfaceFormOccurrence}
+import org.dbpedia.spotlight.model.{DBpediaResourceOccurrence, DBpediaResource, SurfaceFormOccurrence}
+import it.unimi.dsi.webgraph.labelling.ArcLabelledImmutableGraph
+import es.yrbcn.graph.weighted.WeightedPageRankPowerMethod
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,38 +19,46 @@ import org.dbpedia.spotlight.model.{DBpediaResource, SurfaceFormOccurrence}
  * ->two kinds of vertices: entity (represented by DBpediaResource) and surfaceform
  * ->two kinds of edge: between entities of different surfaceforms and from surfaceform to entity
  * @author Hectorliu
- * @param sf2Cands
+ * @param scoredSf2CandsMap
  */
-class ReferentGraph(sf2Cands: Map[SurfaceFormOccurrence, List[DBpediaResource]]) {
+class ReferentGraph(scoredSf2CandsMap: Map[SurfaceFormOccurrence,List[DBpediaResourceOccurrence]], initialEvidences: Map[SurfaceFormOccurrence,Double], occGraph: ArcLabelledImmutableGraph, cooccGraph: ArcLabelledImmutableGraph) {
+  private val LOG = LogFactory.getLog(this.getClass)
 
-  def getInitalEvidence(sfOcc: SurfaceFormOccurrence, cand: DBpediaResource) {
+  private val s2c = scoredSf2CandsMap
+  private val ie = initialEvidences
+  private val og = occGraph
+  private val cg = cooccGraph
+  private val rg = buildReferentGraph()
 
+  def buildReferentArcList () : Array[Array[Int]] = {
+    LOG.info("Combining surface forms and candidates into one graph list")
   }
 
-  def getMentionEntityCompatibility() {
-
-
+  def buildReferentGraph() : ArcLabelledImmutableGraph = {
+    LOG.info("Creating the referent graph")
+    val arcList = buildReferentArcList()
+    val g= GraphUtils.buildArcLabelledGraph(arcList)
+    LOG.info("Done!")
+    g
   }
 
-  def getEntitySemanticLink(){
+  def getRankedCands(){
+    runPageRank()
 
-
-  }
-
-
-  def buildReferentArcList () {
-
-  }
-
-  def buildReferentGraph() {
 
   }
 
   def runPageRank(){
+    val pr:WeightedPageRankPowerMethod  = new WeightedPageRankPowerMethod(rg)
+
+    pr.stepUntil()
+
+    LOG.info("Saving ranks...");
 
   }
 
-  def mapSubGraphIntegerToUri(){
+
+  def subGraphIndexToUri(){
 
   }
 }
