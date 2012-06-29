@@ -27,13 +27,15 @@ import scala.collection.JavaConverters._
 import org.dbpedia.spotlight.exceptions.{ItemNotFoundException, SearchException, InputException}
 import org.dbpedia.spotlight.exceptions.SearchException
 import org.dbpedia.spotlight.model._
-import org.dbpedia.spotlight.graph.ReferentGraph
+import org.dbpedia.spotlight.graph.{HostMap, ReferentGraph}
 import org.apache.lucene.index.Term
 import org.dbpedia.spotlight.lucene.LuceneManager.DBpediaResourceField
 import org.apache.lucene.search.similar.MoreLikeThis
 import com.officedepot.cdap2.collection.CompactHashSet
 import org.apache.lucene.search.ScoreDoc
 import it.unimi.dsi.webgraph.labelling.ArcLabelledImmutableGraph
+import org.dbpedia.spotlight.util.{GraphUtils, GraphConfiguration}
+import it.unimi.dsi.webgraph.{ImmutableGraph, Transform}
 
 /**
  * Created with IntelliJ IDEA.
@@ -53,9 +55,10 @@ import it.unimi.dsi.webgraph.labelling.ArcLabelledImmutableGraph
  * @author hectorliu
  */
 
-class GraphBasedDisambiguator(val factory: SpotlightFactory) extends ParagraphDisambiguator {
+class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFileName: String) extends ParagraphDisambiguator {
 
   val configuration = factory.configuration
+  val graphConfig = new GraphConfiguration(graphConfigFileName)
 
   private val LOG = LogFactory.getLog(this.getClass)
 
@@ -87,6 +90,23 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory) extends ParagraphDi
       case _ => new LuceneCandidateSearcher(contextLuceneManager, false) // should never happen
     }
   }
+
+  LOG.info("Loading graphs...")
+  private val offline = "true" == graphConfig.getOrElse("org.dbpedia.spotlight.graph.offline","false")
+  private val batchSize = graphConfig.getOrElse("org.dbpedia.spotlight.graph.batchSize","100000").toInt
+  private val uriMapFile = new File(graphConfig.get("org.dbpedia.spotlight.graph.mapFile"))
+  private val uri2IdxMap = HostMap.load(uriMapFile)
+  private val idx2UriMap = HostMap.loadReverse(uriMapFile)
+
+  private val baseDir = graphConfig.get("org.dbpedia.spotlight.graph.dir")
+  //private val occGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir ")+graphConfig.get("org.dbpedia.spotlight.graph.occ.basename")
+  private val cooccGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.coocc.dir")+graphConfig.get("org.dbpedia.spotlight.graph.coocc.basename")
+  private val occTransposeGraphBaseName = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir ") + graphConfig.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
+
+  //private val owg = GraphUtils.loadAsArcLablelled(occGraphBasename,offline)
+  private val rowg = GraphUtils.loadAsArcLablelled(occTransposeGraphBaseName, offline)
+  private val cwg = GraphUtils.loadAsArcLablelled(cooccGraphBasename,offline)
+
 
 
   /**
@@ -159,16 +179,8 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory) extends ParagraphDi
 
     val sfImportances = getSurfaceImportances(paragraph)
 
-    //TODO: must be in config
-    val offline = true
-    val baseDir = "graph/"
-    val occGraphBasename = baseDir+"occs/occsGraph"
-    val cooccGraphBasename = baseDir+"co-occs/cooccsGraph"
 
-    val occGraph: ArcLabelledImmutableGraph = if (offline) ArcLabelledImmutableGraph.loadOffline(occGraphBasename) else ArcLabelledImmutableGraph.loadSequential(occGraphBasename)
-    val cooccGraph: ArcLabelledImmutableGraph = if (offline) ArcLabelledImmutableGraph.loadOffline(cooccGraphBasename) else ArcLabelledImmutableGraph.loadSequential(cooccGraphBasename)
-
-    val rGraph = new ReferentGraph(scoredSf2Cands, sfImportances, occGraph, cooccGraph)
+    val rGraph = new ReferentGraph(scoredSf2Cands, sfImportances, rowg, cwg, uri2IdxMap, idx2UriMap)
 
     null
   }
@@ -225,7 +237,10 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory) extends ParagraphDi
   //could be represented by TF.ICF, TF.IDF or Normalized ones
   //we implement TF.ICF here, because it is more likely to capture the importance of a surface form
   def getSurfaceImportances(paragraph: Paragraph): Map[SurfaceFormOccurrence,Double] = {
-
+    val sfImportance = paragraph.occurrences.foldLeft(Map[SurfaceFormOccurrence,Double]())((impMap,occ) => {
+      impMap + (occ -> 1.0)
+    })
+    sfImportance
   }
 
   def getCandidates(sf: SurfaceForm): Set[DBpediaResource] = {

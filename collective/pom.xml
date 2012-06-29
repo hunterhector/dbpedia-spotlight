@@ -30,6 +30,9 @@
                 <launcher>
                     <id>makegraph</id>
                     <mainClass>org.dbpedia.spotlight.graph.GraphMaker</mainClass>
+                    <args>
+                        <arg>../conf/graph.properties</arg>
+                    </args>
                     <jvmArgs>
                         <jvmArg>-Xmx6G</jvmArg>
                     </jvmArgs>

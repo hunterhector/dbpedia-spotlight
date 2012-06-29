@@ -2,7 +2,6 @@ package org.dbpedia.spotlight.graph
 
 import io.Source
 import org.apache.commons.logging.LogFactory
-import collection.mutable.HashMap
 import org.dbpedia.spotlight.model.DBpediaResource
 import java.io.{PrintStream, FileOutputStream, OutputStream, File}
 
@@ -36,13 +35,12 @@ class WikipediaCooccurrencesGraph {
     targetMap
   }
 
-  def parseCooccsList(cooccsFile:File , hostMap:HashMap[String,Int] , integerListFile:File) = {
+  def parseCooccsList(cooccsFile:File , hostMap:Map[String,Int] , integerListFile:File) = {
     LOG.info("Parsing Cooccurrences into Integer List")
 
     val ilfo: OutputStream = new FileOutputStream(integerListFile)
     val ilfoStream = new PrintStream(ilfo, true)
 
-    var linenum = 0
     Source.fromFile(cooccsFile).getLines().filterNot(line => line.trim() == "").foreach(
       line => {
          val fields = line.split("\\t")
@@ -50,26 +48,29 @@ class WikipediaCooccurrencesGraph {
          if (fields.length == 2){
            val srcUri = fields(0)
            val srcIdx = hostMap.getOrElse(srcUri,-1)
-           if (srcIdx == -1) LOG.error(String.format("Uri [%s] was not found in host map, if this happens a lot, something might be wrong",srcUri))
-
-/*           if (!indexSet.contains(srcIdx)){
-             indexSet += srcIdx
-           }*/
-           val targetMap = hadoopTuplesToMap(fields(1))
-           targetMap.foreach{
-             case(tarUri,cooccCount) => {
-               val tarIdx = hostMap.getOrElse(tarUri,-1)
-               if (tarIdx == -1) LOG.error(String.format("Uri [%s] was not found in host map, if this happens a lot, something might be wrong",tarUri))
+           if (srcIdx == -1)
+             LOG.error(String.format("Uri [%s] was not found in host map, if this happens a lot, something might be wrong",srcUri))
+           else{
+             val targetMap = hadoopTuplesToMap(fields(1))
+             targetMap.foreach{
+               case(tarUri,cooccCount) => {
+                 val tarIdx = hostMap.getOrElse(tarUri,-1)
+                 if (tarIdx == -1)
+                   LOG.error(String.format("Uri [%s] was not found in host map, if this happens a lot, something might be wrong",tarUri))
+                 else{
+                   //co-occurrences are bi-directional, but only save one direction may save space
                    val intString = srcIdx + "\t" + tarIdx + "\t" + getWeight(srcUri, tarUri,cooccCount)
+
                    ilfoStream.println(intString)
-                   linenum += 1
+                 }
+               }
              }
            }
-
          }else  LOG.error("Invailid line in file at \n -> \t" + line)
       })
   }
 
+  //may have some variation here
   private def getWeight(srcUri:String, targetUri: String, cooccCount:Int): Double = {
     return cooccCount
   }

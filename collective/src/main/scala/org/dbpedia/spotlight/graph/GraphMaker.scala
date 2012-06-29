@@ -2,6 +2,8 @@ package org.dbpedia.spotlight.graph
 
 import java.io.File
 import es.yrbcn.graph.weighted.WeightedBVGraph
+import org.dbpedia.spotlight.util.{GraphConfiguration, GraphUtils}
+import org.apache.commons.logging.LogFactory
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,24 +15,35 @@ import es.yrbcn.graph.weighted.WeightedBVGraph
 /**
  * Just a Object to run the whole process of creating the graphs
  */
-object GraphMaker {
-  def main(args: Array[String]) {
-    val baseDir = "graph/"
+object GraphMaker{
+  private val LOG = LogFactory.getLog(this.getClass)
 
+  def main(args: Array[String]) {
+    val graphConfigFileName = args(0)
+    val config = new GraphConfiguration(graphConfigFileName)
+
+    val baseDir = config.get("org.dbpedia.spotlight.graph.dir")
+
+    //create if not exists
     createDir(baseDir)
 
-    val uriMapFile = new File(baseDir+"uriMap.tsv")
+    val uriMapFile = new File(baseDir+config.get("org.dbpedia.spotlight.graph.mapFile"))
 
     //Generating for occurrences files
-    //TODO: must be in config
-    val occSubDir = baseDir+"occs/"
+    val occSubDir = baseDir+config.get("org.dbpedia.spotlight.graph.occ.dir")
     createDir(occSubDir)
-    val occsSrcFile = new File("/home/hector/Researches/nlp/DBpedia_Spotlight/dbpedia-spotlight/index/output/occs.tsv")
-    val occInterListFile = new File(occSubDir+"occsIntegerList.tsv")
-    val occBaseName = occSubDir + "occsGraph"
 
-    //Generate the host map, number of nodes is useful to build a normal graph
-//    val numberOfNodes = HostMap.parseToHostMap(occsSrcFile,uriMapFile)
+    val occsSrcFile = new File(config.get("org.dbpedia.spotlight.graph.occsrc"))
+    val occInterListFile = new File(occSubDir+config.get("org.dbpedia.spotlight.graph.occ.integerList"))
+    val occBaseName = occSubDir + config.get("org.dbpedia.spotlight.graph.occ.basename")
+
+    val occTransposeBaseName = occSubDir + config.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
+    val batchSize = config.get("org.dbpedia.spotlight.graph.transpose.batchSize").toInt
+
+    //Generate the host map
+    val numberOfNodes = HostMap.parseToHostMap(occsSrcFile,uriMapFile)
+    config.setNodeNumber(numberOfNodes)
+
     //Get the host map
     val hostMap = HostMap.load(uriMapFile)
 
@@ -39,32 +52,36 @@ object GraphMaker {
     wog.parseOccsList(occsSrcFile,hostMap, occInterListFile)
 
     //build a weighted graph and store
-    val ocwg = GraphUtils.buildWeightedGraph(occInterListFile)
+    val ocwg = GraphUtils.buildWeightedGraphFromFile(occInterListFile)
     GraphUtils.storeWeightedGraph(ocwg,occBaseName)
 
+    //also store the transpose graph, easy to use outdegree to find the indegree of a node in the origin graph
+    val ocwgTrans = GraphUtils.transpose(ocwg,batchSize)
+    GraphUtils.storeWeightedGraph(ocwgTrans,occTransposeBaseName)
+
     //Generating for co-occurrences files
-    //TODO: must be in config
-    val cooccSubDir = baseDir+"co-occs/"
+    val cooccSubDir = baseDir+config.get("org.dbpedia.spotlight.graph.coocc.dir")
     createDir(cooccSubDir)
-    val cooccsSrcFile = new File("/home/hector/Researches/nlp/DBpedia_Spotlight/dbpedia-spotlight/index/output/co-occs-count.tsv")
-    val cooccInterListFile = new File(cooccSubDir+"cooccsIntegerList.tsv")
-    val cooccBaseName = cooccSubDir + "cooccsGraph"
+
+    val cooccsSrcFile = new File(config.get("org.dbpedia.spotlight.graph.cooccsrc"))
+    val cooccInterListFile = new File(cooccSubDir+config.get("org.dbpedia.spotlight.graph.coocc.integerList"))
+    val cooccBaseName = cooccSubDir + config.get("org.dbpedia.spotlight.graph.coocc.basename")
 
     //parse the cooccsSrcFile and store the parsed result as an IntegerList
     val wcg = new WikipediaCooccurrencesGraph
     wcg.parseCooccsList(cooccsSrcFile,hostMap,cooccInterListFile)
 
     //build a weighted graph and store
-    val cowg = GraphUtils.buildWeightedGraph(cooccInterListFile)
+    val cowg = GraphUtils.buildWeightedGraphFromFile(cooccInterListFile)
     GraphUtils.storeWeightedGraph(cowg,cooccBaseName)
   }
 
   private def createDir(dirName:String){
-     val theDir = new File(dirName);
+     val theDir = new File(dirName)
       if (!theDir.exists())
       {
-        println("Creating directory: " + dirName);
-        theDir.mkdir();
+        LOG.info("Creating directory: " + dirName)
+        theDir.mkdir()
       }
   }
 }

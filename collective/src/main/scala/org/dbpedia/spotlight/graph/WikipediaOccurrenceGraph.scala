@@ -21,7 +21,7 @@ import collection.mutable.HashMap
 class WikipediaOccurrenceGraph {
   val LOG = LogFactory.getLog(this.getClass)
 
-  def parseOccsList(occsFile: File,  hostMap:HashMap[String,Int], integerListFile: File) = {
+  def parseOccsList(occsFile: File,  hostMap:Map[String,Int], integerListFile: File) = {
     LOG.info("Parsing occurrences into Integer List")
 
     val arcMap = new HashMap[(Int,Int),Double]
@@ -39,10 +39,11 @@ class WikipediaOccurrenceGraph {
           val srcIndex = hostMap.getOrElse(srcUri,-1)
           val targetIndex = hostMap.getOrElse(targetUri,-1)
 
-          if (srcIndex == -1)  LOG.error(String.format("Uri [%s] was not found in host map, if this happens a lot, something might be wrong",srcUri))
-          if (targetIndex == -1)  LOG.error(String.format("Uri [%s] was not found in host map, if this happens a lot, something might be wrong",targetUri))
-
-          else {
+          if (srcIndex == -1)
+            LOG.error(String.format("Uri [%s] was not found in host map, if this happens a lot, something might be wrong",srcUri))
+          else if (targetIndex == -1)
+            LOG.error(String.format("Uri [%s] was not found in host map, if this happens a lot, something might be wrong",targetUri))
+          else{
               if (arcMap.contains((srcIndex,targetIndex))){
                 arcMap((srcIndex,targetIndex)) += weight
               }else arcMap((srcIndex,targetIndex)) = weight

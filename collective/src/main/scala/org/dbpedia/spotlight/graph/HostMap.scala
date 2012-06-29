@@ -67,7 +67,7 @@ object HostMap {
         } else {
           LOG.error("Invailid line in file at \n -> \t" + line)
         }
-        if (uriSet.size % 1000000 == 0) LOG.info(String.format("Map %s valid URIs", indexCount.toString))
+        if (uriSet.size % 500000 == 0) LOG.info(String.format("Map %s valid URIs", indexCount.toString))
       })
 
     mfoStream.close()
@@ -83,7 +83,7 @@ object HostMap {
    * @param mapFile the map file created by parseToHostMap
    * @return a scala Map: host map from uri to graph index
    */
-  def load (mapFile:File): HashMap[String,Int] = {
+  def load (mapFile:File): Map[String,Int] = {
     LOG.info("Reading the host map.")
     val hostMap = new HashMap[String,Int]
     Source.fromFile(mapFile).getLines().filterNot(line => line.trim() == "").foreach(
@@ -100,7 +100,7 @@ object HostMap {
       }
     )
     LOG.info("Done")
-    hostMap
+    hostMap.toMap
   }
 
   /**
@@ -108,8 +108,8 @@ object HostMap {
    * @param mapFile the map file created by parseToHostMap
    * @return a scala Map: host map from graph index to uri
    */
-  def loadReverse (mapFile:File): HashMap[Int,String] = {
-    LOG.info("Reading the host map.")
+  def loadReverse (mapFile:File): Map[Int,String] = {
+    LOG.info("Reading the host map reversely.")
     val hostMap = new HashMap[Int,String]
     Source.fromFile(mapFile).getLines().filterNot(line => line.trim() == "").foreach(
       line =>{
@@ -125,6 +125,6 @@ object HostMap {
       }
     )
     LOG.info("Done")
-    hostMap
+    hostMap.toMap
   }
 }
