@@ -4,7 +4,7 @@ import java.io.{PrintStream, FileOutputStream, OutputStream, File}
 import io.Source
 import org.dbpedia.spotlight.model.DBpediaResource
 import org.apache.commons.logging.LogFactory
-import collection.mutable.HashMap
+import collection.mutable
 
 
 /**
@@ -24,7 +24,7 @@ class WikipediaOccurrenceGraph {
   def parseOccsList(occsFile: File,  hostMap:Map[String,Int], integerListFile: File) = {
     LOG.info("Parsing occurrences into Integer List")
 
-    val arcMap = new HashMap[(Int,Int),Double]
+    val arcMap = new mutable.HashMap[(Int,Int),Double]
 
     Source.fromFile(occsFile).getLines().filterNot(line => line.trim() == "").foreach(
       line => {

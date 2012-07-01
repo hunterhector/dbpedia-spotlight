@@ -51,7 +51,7 @@ class GraphConfiguration(val configFile:File) {
      save()
   }
 
-  def getNodeNumber():Int = {
+  def getNodeNumber:Int = {
      val r= get("org.dbpedia.spotlight.graph.nodeNumber").toInt
      if ( r < 0)
        throw new ConfigurationException("Nodenumber is not set correctly")

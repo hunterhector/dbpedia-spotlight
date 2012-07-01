@@ -7,6 +7,7 @@ import org.dbpedia.spotlight.spot.Spotter
 import org.dbpedia.spotlight.model._
 import org.dbpedia.spotlight.exceptions.SearchException
 import org.dbpedia.spotlight.util.GraphConfiguration
+import org.apache.commons.logging.LogFactory
 
 /*
 * Copyright 2012 DBpedia Spotlight Development Team
@@ -34,6 +35,7 @@ import org.dbpedia.spotlight.util.GraphConfiguration
  */
 
 object GraphBasedDisambiguatorRunner {
+  val LOG = LogFactory.getLog(this.getClass)
 
   def main(args: Array[String]) {
 
@@ -48,7 +50,9 @@ object GraphBasedDisambiguatorRunner {
     val spotter = factory.spotter(spotterPolicy)
 
     //TODO should be included in factory
+
     val disambiguator = new ParagraphDisambiguatorJ(new GraphBasedDisambiguator(factory,graphConfigFileName))
+    LOG.info("Initialization done.")
 
     val k = 5
     val occList = process(passage, spotter, disambiguator, k)
@@ -66,12 +70,9 @@ object GraphBasedDisambiguatorRunner {
   def process(text: String, spotter: Spotter, disambiguator: ParagraphDisambiguatorJ, numOfResults: Int): List[(SurfaceFormOccurrence, java.util.List[DBpediaResourceOccurrence])] = {
     val spots: List[SurfaceFormOccurrence] = spotter.extract(new Text(text)).toList
 
-
     var bestKforOccs: List[(SurfaceFormOccurrence, java.util.List[DBpediaResourceOccurrence])] = List()
 
-
     if (spots.size == 0) return bestKforOccs
-
 
     try {
       bestKforOccs = disambiguator.bestK(Factory.paragraph.fromJ(spots), numOfResults).toList

@@ -93,21 +93,18 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
 
   LOG.info("Loading graphs...")
   private val offline = "true" == graphConfig.getOrElse("org.dbpedia.spotlight.graph.offline","false")
-  private val batchSize = graphConfig.getOrElse("org.dbpedia.spotlight.graph.batchSize","100000").toInt
   private val uriMapFile = new File(graphConfig.get("org.dbpedia.spotlight.graph.mapFile"))
   private val uri2IdxMap = HostMap.load(uriMapFile)
-  private val idx2UriMap = HostMap.loadReverse(uriMapFile)
 
+  LOG.info("Preparing graphs...")
   private val baseDir = graphConfig.get("org.dbpedia.spotlight.graph.dir")
   //private val occGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir ")+graphConfig.get("org.dbpedia.spotlight.graph.occ.basename")
   private val cooccGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.coocc.dir")+graphConfig.get("org.dbpedia.spotlight.graph.coocc.basename")
-  private val occTransposeGraphBaseName = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir ") + graphConfig.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
+  private val occTransposeGraphBaseName = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir") + graphConfig.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
 
   //private val owg = GraphUtils.loadAsArcLablelled(occGraphBasename,offline)
   private val rowg = GraphUtils.loadAsArcLablelled(occTransposeGraphBaseName, offline)
   private val cwg = GraphUtils.loadAsArcLablelled(cooccGraphBasename,offline)
-
-
 
   /**
    * Every disambiguator has a name that describes its settings (used in evaluation to compare results)
@@ -136,8 +133,6 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
   /**
    * Executes disambiguation per paragraph (collection of occurrences).
    * Can be seen as a classification task: unlabeled instances in, labeled instances out.
-   *
-   * Will use a graph based method to leverage all entity disambiguation decision in paragraph together
    *
    * @param paragraph
    * @return
@@ -175,18 +170,20 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
 
     if (paragraph.occurrences.size == 0) return Map[SurfaceFormOccurrence, List[DBpediaResourceOccurrence]]()
 
-    val scoredSf2Cands = getScoredCandidates(paragraph)
+    val scoredSf2Cands = getContextScore(paragraph)
 
-    val sfImportances = getSurfaceImportances(paragraph)
+    val rGraph = new ReferentGraph(scoredSf2Cands, rowg, cwg, uri2IdxMap)
 
+    val rg = rGraph.buildReferentGraph()
 
-    val rGraph = new ReferentGraph(scoredSf2Cands, sfImportances, rowg, cwg, uri2IdxMap, idx2UriMap)
+    GraphUtils.dumpLabelledGraph(rg)
 
-    null
+    rGraph.getResult(k)
   }
 
-  def getScoredCandidates(paragraph: Paragraph) : Map[SurfaceFormOccurrence,List[DBpediaResourceOccurrence]]  = {
-    val allCandidates = CompactHashSet[DBpediaResource];
+  def getContextScore(paragraph: Paragraph) : Map[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)]  = {
+    LOG.info("Getting initial context scores")
+    val allCandidates = CompactHashSet[DBpediaResource]
 
     val sf2CandidatesMap = paragraph.occurrences.foldLeft(
       Map[SurfaceFormOccurrence, List[DBpediaResource]]()
@@ -203,8 +200,8 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
     try {
       hits = query(paragraph.text, allCandidates.toArray)
     } catch {
-      case e: Exception => throw new SearchException(e);
-      case r: RuntimeException => throw new SearchException(r);
+      case e: Exception => throw new SearchException(e)
+      case r: RuntimeException => throw new SearchException(r)
       case _ => LOG.error("Unknown really scary error happened. You can cry now.")
     }
 
@@ -216,8 +213,8 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
     })
 
     //build up a map for compatible edges
-    val scoredSf2Cands = sf2CandidatesMap.foldLeft(Map[SurfaceFormOccurrence,List[DBpediaResourceOccurrence]]()) (( edgesMap, sftoCands) => {
-      val sf = sftoCands._1
+    val scoredSf2Cands = sf2CandidatesMap.foldLeft(Map[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)]()) (( edgesMap, sftoCands) => {
+      val sfOcc = sftoCands._1
       val cands = sftoCands._2
       val candOccs = cands.map( shallowResource => {
         val (resource: DBpediaResource, supportConfidence: (Int, Double)) = scores.get(shallowResource.uri) match{
@@ -226,20 +223,18 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
           }
           case _ => (shallowResource,(shallowResource.support,0.0))
         }
-        Factory.DBpediaResourceOccurrence.from(sf,resource, supportConfidence)
+        Factory.DBpediaResourceOccurrence.from(sfOcc,resource, supportConfidence)
       })
-      edgesMap + (sf -> candOccs)
+      edgesMap + (sfOcc -> (candOccs,getSurfaceImportance(sfOcc.surfaceForm)))
     })
-
+    LOG.info("Done")
     scoredSf2Cands
   }
 
   //could be represented by TF.ICF, TF.IDF or Normalized ones
   //we implement TF.ICF here, because it is more likely to capture the importance of a surface form
-  def getSurfaceImportances(paragraph: Paragraph): Map[SurfaceFormOccurrence,Double] = {
-    val sfImportance = paragraph.occurrences.foldLeft(Map[SurfaceFormOccurrence,Double]())((impMap,occ) => {
-      impMap + (occ -> 1.0)
-    })
+  def getSurfaceImportance(sf: SurfaceForm): Double = {
+    val sfImportance = 1.0
     sfImportance
   }
 

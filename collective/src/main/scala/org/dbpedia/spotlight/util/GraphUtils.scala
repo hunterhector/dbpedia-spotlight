@@ -94,6 +94,8 @@ object GraphUtils {
   }
 
   def dumpLabelledGraph(g: ArcLabelledImmutableGraph) = {
+    LOG.info("Dumping the labelled graph for debug purposes")
+
     val nodeIterator: ArcLabelledNodeIterator = g.nodeIterator
 
     while (nodeIterator.hasNext) {
