@@ -69,6 +69,18 @@ object GraphUtils {
     aig
   }
 
+  def buildWeightedGraphFromFile(integerListFile: File, numNodes: Int): ArcLabelledImmutableGraph = {
+    LOG.info(String.format("Creating a weigted graph"))
+
+    val weightedArcArray = Source.fromFile(integerListFile).getLines().filterNot(line => line.trim() == "").filter(line => line.split("\t").length >= 3).map(line => new WeightedArc(line)).toArray
+
+    val aig: ArcLabelledImmutableGraph = new WeightedBVGraph(weightedArcArray, numNodes)
+
+    LOG.info(String.format("Done. Created a weighted Graph with %s nodes", aig.numNodes().toString))
+
+    aig
+  }
+
   def buildWeightedGraphFromTriples(triples:List[(Int,Int,Float)]): ArcLabelledImmutableGraph = {
     LOG.info("Creating a weighted graph")
 
@@ -93,7 +105,7 @@ object GraphUtils {
     alg
   }
 
-  def dumpLabelledGraph(g: ArcLabelledImmutableGraph) = {
+  def dumpLabelledGraph(g: ArcLabelledImmutableGraph) {
     LOG.info("Dumping the labelled graph for debug purposes")
 
     val nodeIterator: ArcLabelledNodeIterator = g.nodeIterator
@@ -106,13 +118,13 @@ object GraphUtils {
     }
   }
 
-  def storeGraph(g: ImmutableGraph, baseName: String) = {
+  def storeGraph(g: ImmutableGraph, baseName: String) {
     LOG.info("Storing Graph to " + baseName)
     BVGraph.store(g, baseName + ArcLabelledImmutableGraph.UNDERLYINGGRAPH_SUFFIX)
     LOG.info("Graph generated.")
   }
 
-  def storeWeightedGraph(g: ArcLabelledImmutableGraph, baseName: String) = {
+  def storeWeightedGraph(g: ArcLabelledImmutableGraph, baseName: String) {
     LOG.info("Storing Weighted Graph to " + baseName)
 
     LOG.info("Storing Labels")

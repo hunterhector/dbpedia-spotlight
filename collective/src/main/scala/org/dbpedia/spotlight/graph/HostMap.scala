@@ -52,22 +52,21 @@ object HostMap {
           if (!uriSet.contains(srcUri)) {
             uriSet += srcUri
 
-            indexCount += 1
             val mapString = indexCount + "\t" + srcUri
+            indexCount += 1
             mfoStream.println(mapString)
           }
 
           if (!uriSet.contains(targetUri)) {
             uriSet += targetUri
-            indexCount += 1
             val mapString = indexCount + "\t" + targetUri
+            indexCount += 1
             mfoStream.println(mapString)
           }
-
+          if (uriSet.size % 500000 == 0) LOG.info(String.format("Map %s valid URIs", indexCount.toString))
         } else {
           LOG.error("Invailid line in file at \n -> \t" + line)
         }
-        if (uriSet.size % 500000 == 0) LOG.info(String.format("Map %s valid URIs", indexCount.toString))
       })
 
     mfoStream.close()

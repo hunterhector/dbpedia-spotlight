@@ -71,8 +71,9 @@ object GraphMaker{
     val wcg = new WikipediaCooccurrencesGraph
     wcg.parseCooccsList(cooccsSrcFile,hostMap,cooccInterListFile)
 
-    //build a weighted graph and store
-    val cowg = GraphUtils.buildWeightedGraphFromFile(cooccInterListFile)
+    //build a weighted graph and store.
+    //We should use the method that specify a node number, which make it possible to have nodes with no arcs
+    val cowg = GraphUtils.buildWeightedGraphFromFile(cooccInterListFile,config.getNodeNumber)
     GraphUtils.storeWeightedGraph(cowg,cooccBaseName)
   }
 

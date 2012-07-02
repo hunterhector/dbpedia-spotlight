@@ -96,6 +96,29 @@ public class WeightedBVGraph extends ArcLabelledImmutableSequentialGraph {
 		
 		numNodes = maxNodeID + 1;
 	}
+
+    /** Creates a new arc-labelled immutable graph using a specified list of triples.
+     *
+     *  Provide a method to specify the numbe of nodes, so isolated nodes can be defined
+     * @author hectorliu
+     * @param arclist a list of triples specifying labelled arcs (see the {@linkplain IntegerTriplesArcLabelledImmutableGraph class documentation});
+     * @param  numNodes give the number of nodes of this graph
+     * order is not relevant, but multiple arcs are not allowed.
+     */
+    public WeightedBVGraph( WeightedArc[] arclist, int numNodes ) {
+        this.arclist = arclist;
+        prototype = new FixedWidthFloatLabel("FOO");
+
+        Arrays.sort( arclist, new Comparator<WeightedArc>() {
+            public int compare( WeightedArc p, WeightedArc q ) {
+                final float t =  p.src - q.src; // Compare by source
+                if ( t != 0 ) return (int)t;
+                return (int) (p.dest - q.dest ); // Compare by destination
+            }
+        } );
+
+        this.numNodes = numNodes;
+    }
 	
 	@Override
 	public Label prototype() {
