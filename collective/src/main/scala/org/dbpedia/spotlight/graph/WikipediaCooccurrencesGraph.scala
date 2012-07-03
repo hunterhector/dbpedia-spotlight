@@ -58,10 +58,13 @@ class WikipediaCooccurrencesGraph {
                  if (tarIdx == -1)
                    LOG.error(String.format("Uri [%s] was not found in host map, if this happens a lot, something might be wrong",tarUri))
                  else{
-                   //co-occurrences are bi-directional, but only save one direction may save space
-                   val intString = srcIdx + "\t" + tarIdx + "\t" + getWeight(srcUri, tarUri,cooccCount)
-
-                   ilfoStream.println(intString)
+                   if (srcIdx != tarIdx){
+                     //co-occurrences are bi-directional, but only save one direction may save space
+                     val intString = srcIdx + "\t" + tarIdx + "\t" + getWeight(srcUri, tarUri,cooccCount)
+                     ilfoStream.println(intString)
+                   }else{
+                     //LOG.warn("We don't particularly welcome self co-occurrences.")
+                   }
                  }
                }
              }

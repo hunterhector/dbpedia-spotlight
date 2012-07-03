@@ -34,19 +34,24 @@ class WikipediaOccurrenceGraph {
           val id = fields(0)
           val targetUri = fields(1)
           val srcUri = id.split("-")(0)
-          val weight = getWeight(new DBpediaResource(srcUri),new DBpediaResource(targetUri))
 
-          val srcIndex = hostMap.getOrElse(srcUri,-1)
-          val targetIndex = hostMap.getOrElse(targetUri,-1)
+          if (targetUri != srcUri){
+            val weight = getWeight(new DBpediaResource(srcUri),new DBpediaResource(targetUri))
 
-          if (srcIndex == -1)
-            LOG.error(String.format("Uri [%s] was not found in host map, if this happens a lot, something might be wrong",srcUri))
-          else if (targetIndex == -1)
-            LOG.error(String.format("Uri [%s] was not found in host map, if this happens a lot, something might be wrong",targetUri))
-          else{
-              if (arcMap.contains((srcIndex,targetIndex))){
-                arcMap((srcIndex,targetIndex)) += weight
-              }else arcMap((srcIndex,targetIndex)) = weight
+            val srcIndex = hostMap.getOrElse(srcUri,-1)
+            val targetIndex = hostMap.getOrElse(targetUri,-1)
+
+            if (srcIndex == -1)
+              LOG.error(String.format("Uri [%s] was not found in host map, if this happens a lot, something might be wrong",srcUri))
+            else if (targetIndex == -1)
+              LOG.error(String.format("Uri [%s] was not found in host map, if this happens a lot, something might be wrong",targetUri))
+            else{
+                if (arcMap.contains((srcIndex,targetIndex))){
+                  arcMap((srcIndex,targetIndex)) += weight
+                }else arcMap((srcIndex,targetIndex)) = weight
+            }
+          }else{
+            //LOG.warn("We don't particularly welcome self occurrences")
           }
         } else {
           LOG.error("Invailid line in file at \n -> \t" + line)
