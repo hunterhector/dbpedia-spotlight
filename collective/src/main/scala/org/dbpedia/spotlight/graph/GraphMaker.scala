@@ -27,7 +27,7 @@ object GraphMaker{
     //create if not exists
     createDir(baseDir)
 
-    val uriMapFile = new File(baseDir+config.get("org.dbpedia.spotlight.graph.mapFile"))
+    val uriMapFile = new File(config.get("org.dbpedia.spotlight.graph.mapFile"))
 
     //Generating for occurrences files
     val occSubDir = baseDir+config.get("org.dbpedia.spotlight.graph.occ.dir")
@@ -75,6 +75,8 @@ object GraphMaker{
     //We should use the method that specify a node number, which make it possible to have nodes with no arcs
     val cowg = GraphUtils.buildWeightedGraphFromFile(cooccInterListFile,config.getNodeNumber)
     GraphUtils.storeWeightedGraph(cowg,cooccBaseName)
+
+
   }
 
   private def createDir(dirName:String){
