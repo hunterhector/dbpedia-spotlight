@@ -103,7 +103,7 @@ object SemanticGraph{
 //
 //     sg.buildIntegerList(sgFile)
 
-     val g = GraphUtils.buildWeightedGraphFromFile(sgFile)
+     val g = GraphUtils.buildWeightedGraphFromFile(sgFile,graphConfig.getNodeNumber)
 
      GraphUtils.storeWeightedGraph(g,sgBasename)
    }
