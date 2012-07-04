@@ -23,10 +23,12 @@ object GraphInspector {
   private val occGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir")+graphConfig.get("org.dbpedia.spotlight.graph.occ.basename")
   private val cooccGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.coocc.dir")+graphConfig.get("org.dbpedia.spotlight.graph.coocc.basename")
   private val occTransposeGraphBaseName = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir") + graphConfig.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
+  private val sgBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.semantic.dir")+graphConfig.get("org.dbpedia.spotlight.graph.semantic.basename")
 
   private val owg = GraphUtils.loadAsArcLablelled(occGraphBasename,offline)
   private val rowg = GraphUtils.loadAsArcLablelled(occTransposeGraphBaseName, offline)
   private val cwg = GraphUtils.loadAsArcLablelled(cooccGraphBasename,offline)
+  private val sg = GraphUtils.loadAsArcLablelled(sgBasename,offline)
 
   LOG.info("Done")
 
@@ -34,6 +36,7 @@ object GraphInspector {
     LOG.info(String.format("In occ transpose graph, Number of nodes:  %s; Number of arcs: %s",rowg.numNodes().toString,rowg.numArcs().toString))
     LOG.info(String.format("In occ graph, Number of nodes:  %s; Number of arcs: %s",owg.numNodes().toString,owg.numArcs().toString))
     LOG.info(String.format("In coocc graph, Number of nodes:  %s; Number of arcs: %s",cwg.numNodes().toString,cwg.numArcs().toString))
+    LOG.info(String.format("In semantic graph, Number of nodes: %s; Number of arcs: %s",sg.numNodes().toString,sg.numArcs().toString))
   }
 
   def checkFirstNode(){
@@ -140,6 +143,7 @@ object GraphInspector {
   }
 
   def main(args:Array[String]) {
+    checkStats()
     checkNode(owg,0)
     checkNode(owg,1)
     checkNode(owg,2)
