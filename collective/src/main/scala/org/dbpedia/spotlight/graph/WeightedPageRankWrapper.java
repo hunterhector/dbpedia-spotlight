@@ -15,11 +15,13 @@ import java.io.IOException;
  */
 public class WeightedPageRankWrapper {
 
-    public static double[] run(ArcLabelledImmutableGraph g, double alpha, boolean stronlyPreferential, double threshold, int maxIter, DoubleList start) throws IOException {
+    public static double[] run(ArcLabelledImmutableGraph g, double alpha, boolean stronlyPreferential, double threshold, int maxIter, DoubleList start, DoubleList preference) throws IOException {
         WeightedPageRankPowerMethod pr = new WeightedPageRankPowerMethod(g);
 
         pr.alpha = alpha;
         pr.stronglyPreferential = stronlyPreferential;
+        pr.start = start;
+        pr.preference = preference;
 
         WeightedPageRank.NormDeltaStoppingCriterion deltaStop = new WeightedPageRank.NormDeltaStoppingCriterion(threshold);
         WeightedPageRank.IterationNumberStoppingCriterion iterStop = new WeightedPageRank.IterationNumberStoppingCriterion(maxIter);
