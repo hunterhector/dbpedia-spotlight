@@ -98,14 +98,19 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
 
   LOG.info("Preparing graphs...")
   private val baseDir = graphConfig.get("org.dbpedia.spotlight.graph.dir")
-  //private val occGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir ")+graphConfig.get("org.dbpedia.spotlight.graph.occ.basename")
-  private val cooccGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.coocc.dir")+graphConfig.get("org.dbpedia.spotlight.graph.coocc.basename")
-  private val occTransposeGraphBaseName = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir") + graphConfig.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
+//  private val occGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir")+graphConfig.get("org.dbpedia.spotlight.graph.occ.basename")
+//  private val cooccGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.coocc.dir")+graphConfig.get("org.dbpedia.spotlight.graph.coocc.basename")
+//  private val occTransposeGraphBaseName = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir") + graphConfig.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
+  private val sgSubDir = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.semantic.dir")
+  private val sgBasename = sgSubDir+graphConfig.get("org.dbpedia.spotlight.graph.semantic.basename")
 
-  //private val owg = GraphUtils.loadAsArcLablelled(occGraphBasename,offline)
-  private val rowg = GraphUtils.loadAsArcLablelled(occTransposeGraphBaseName, offline)
-  private val cwg = GraphUtils.loadAsArcLablelled(cooccGraphBasename,offline)
+//  private val owg = GraphUtils.loadAsArcLablelled(occGraphBasename,offline)
+//  private val rowg = GraphUtils.loadAsArcLablelled(occTransposeGraphBaseName, offline)
+//  private val cwg = GraphUtils.loadAsArcLablelled(cooccGraphBasename,offline)
+  private val sg = GraphUtils.loadAsArcLablelled(sgBasename,offline)
 
+  LOG.info("Loading other parameters...")
+  private val teleportationConstant = graphConfig.getOrElse("org.dbpedia.spotlight.graph.pagerank.teleportation","0.1").toFloat
   /**
    * Every disambiguator has a name that describes its settings (used in evaluation to compare results)
    * @return a short description of the Disambiguator
@@ -172,11 +177,9 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
 
     val scoredSf2Cands = getContextScore(paragraph)
 
-    val rGraph = new ReferentGraph(scoredSf2Cands, rowg, cwg, uri2IdxMap)
+    val rGraph = new ReferentGraph(sg, scoredSf2Cands, uri2IdxMap, teleportationConstant)
 
     val rg = rGraph.buildReferentGraph()
-
-    GraphUtils.dumpLabelledGraph(rg)
 
     rGraph.getResult(k)
   }
@@ -190,7 +193,6 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
     )(
       (sf2Cands, sfOcc) => {
         val cands = getCandidates(sfOcc.surfaceForm).toList
-        //debug
         cands.foreach(r => allCandidates.add(r))
         sf2Cands + (sfOcc -> cands)
       })
