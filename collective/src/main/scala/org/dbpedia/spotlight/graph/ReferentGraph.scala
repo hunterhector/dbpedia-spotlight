@@ -28,79 +28,47 @@ import org.dbpedia.spotlight.model.SurfaceFormOccurrence
  * @author Hectorliu
  * @param scoredSf2CandsMap
  */
-class ReferentGraph(scoredSf2CandsMap: Map[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)], occTranGraph: ArcLabelledImmutableGraph, cooccGraph: ArcLabelledImmutableGraph, uri2IdxMap: Map[String,Int]) {
+class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: Map[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)], uri2IdxMap: Map[String,Int], teleportationConstant:Float) {
   private val LOG = LogFactory.getLog(this.getClass)
 
   LOG.info("Initializing Graph Object.")
 
   private val s2c = scoredSf2CandsMap
-  private val otg = occTranGraph
-  private val cg = cooccGraph
+  private val sg = semanticGraph
 
   private val indexRecord = new mutable.HashMap[Int,(DBpediaResourceOccurrence,SurfaceFormOccurrence)]()
-  private val subCooccGraph = getCandiddateSubGraph
-  private val totalNodeNumber = otg.numNodes //total node number in occ graph, should be the largest node number possible
-  private val candidateNumber = subCooccGraph.numNodes
+  private val subSemanticGraph = getCandiddateSubGraph
 
+  private val sfNumber = s2c.size
+  private val candidateNumber = subSemanticGraph.subgraphSize
+  private val nodeNumber = sfNumber + candidateNumber
+
+  private val zeroArray = Array.fill[Double](nodeNumber)(0)
   //initial vector assign to nodes at the start of pagerank
-  private val initialVector: DoubleArrayList = new DoubleArrayList() //build up during buildReferentArcList
+  private val initialVector: DoubleArrayList = new DoubleArrayList(zeroArray) //build up during buildReferentArcList
   //preference vector for pagerank
-  private val preferenceVector: DoubleArrayList = new DoubleArrayList() //should also be build up during buildReferentArcList
+  private val preferenceVector: DoubleArrayList = new DoubleArrayList(zeroArray) //should also be build up during buildReferentArcList
 
   private val arcList:List[(Int,Int,Float)] = buildReferentArcList()
 
-  val rg = buildReferentGraph //For index less than candidateNumber, referentGraph and subCooccGraph have index pointing to the same thing
+  val rg = buildReferentGraph() //For index less than candidateNumber, referentGraph and subCooccGraph have index pointing to the same thing
 
   private def getCandiddateSubGraph = {
     LOG.info("Getting a subgraph of all candiddates.")
-    val allCandidateIndex = s2c.foldLeft(List[Int]())((idxList,tuple)=> {
+    val allCandidateIndex = s2c.foldLeft(Set[Int]())((idxSet,tuple)=> {
       val sf = tuple._1
       val occList = tuple._2._1
       val list = occList.map(occ => uri2IdxMap.getOrElse(occ.resource.uri,-1)).filterNot(index => index == -1)
-      idxList ++ list
+      idxSet ++ list
     })
-    LOG.info("Done.")
-    new ImmutableSubgraph(cg,allCandidateIndex.toArray)
-
+    LOG.info("Number of candidates: "+allCandidateIndex.size)
+    new SemanticSubGraph(sg,allCandidateIndex)
   }
 
   private def buildReferentArcList ():List[(Int,Int,Float)]  = {
-    val subGraphIterator = subCooccGraph.nodeIterator(0)
+    LOG.info("Getting semantic graph")
 
-    LOG.info("Computing semantic weight or arcs.")
-
-    val tmpArcList = new ListBuffer[(Int,Int,Float)]()
-    (0 to candidateNumber).foreach(_ =>{
-      val subCurrIdx = subGraphIterator.nextInt()
-      // give each candidate node a initial evidence 0.
-      initialVector.add(subCurrIdx,0)
-
-      val outdegree = subGraphIterator.outdegree()
-      // add the arcs in co-occurrences graph
-      if (outdegree != 0){
-        val rootCurrIdx = subCooccGraph.toRootNode(subCurrIdx)
-        val occTranCurrIter = otg.nodeIterator(rootCurrIdx)
-        val cooccCurrIter = cg.nodeIterator(rootCurrIdx)
-
-        val indegreeCurr = occTranCurrIter.outdegree
-
-        val labels = cooccCurrIter.labelArray
-        val succs = subGraphIterator.successorArray
-        (0 to outdegree).foreach(i => {
-          val subNextIdx = succs(i)
-          val cooccCount = labels(i).getInt
-          val rootNextIdx = subCooccGraph.toRootNode(subNextIdx)
-          val occTranNextIter = otg.nodeIterator(rootNextIdx)
-          val indegreeNext = occTranNextIter.outdegree()
-          val semRelated = mwSemanticRelateness(indegreeCurr,indegreeNext,cooccCount,totalNodeNumber)
-
-          val tuple = (subCurrIdx,subNextIdx,semRelated.toFloat)
-          val tupleR = (subNextIdx,subCurrIdx,semRelated.toFloat)
-          tmpArcList += tuple
-          tmpArcList += tupleR
-        })
-      }
-    })
+    val tmpArcList = subSemanticGraph.getSemanticArcList()
 
     LOG.info("Combining surface forms and candidates into one graph list")
     // Just need to know where surface forms start in graph, their score on them
@@ -112,17 +80,21 @@ class ReferentGraph(scoredSf2CandsMap: Map[SurfaceFormOccurrence,(List[DBpediaRe
         //connect surfaceform nodes to candidates nodes
         occList.foreach(occ => {
            val idx = uri2IdxMap.getOrElse(occ.resource.uri,-1)
-           if (idx == -1) LOG.error("Resouce not found in uriMap")
+           if (idx == -1) LOG.error("Resouce not found in uriMap: "+occ.resource.uri)
            else{
-             val subIdx = subCooccGraph.fromRootNode(idx)
+             //get the candidate index in the referent graph
+             val subIdx = subSemanticGraph.fromSupergraphNode(idx)
              indexRecord += (subIdx -> (occ,sfOcc))
              val contextualScore = occ.contextualScore
+             // add a link from sf to candidate
              val tuple = (sfSubIdx,subIdx,contextualScore.toFloat)
              tmpArcList += tuple
            }
         })
         //for each surface form node, give a initial evidence
-        initialVector.add(sfSubIdx,initialEvidence)
+        initialVector.set(sfSubIdx,initialEvidence)
+        //preference vector the same with initial vector
+        preferenceVector.set(sfSubIdx,teleportationConstant)
         sfSubIdx += 1    //increment to add next surface form
       }
       case _ => LOG.error("Incorrect tuple in scoredSf2CandsMap") //well, this should not happen
@@ -131,16 +103,9 @@ class ReferentGraph(scoredSf2CandsMap: Map[SurfaceFormOccurrence,(List[DBpediaRe
     tmpArcList.toList
   }
 
-  private def mwSemanticRelateness(indegreeA:Int,indegreeB:Int,cooccCount:Int,wikiSize:Int) = {
-    val maxIn = math.max(indegreeA,indegreeB)
-    val minIn = math.min(indegreeA,indegreeB)
-    1-(math.log(maxIn)-math.log(cooccCount))/(math.log(wikiSize) - math.log(minIn))
-  }
-
   def buildReferentGraph() : ArcLabelledImmutableGraph = {
-    LOG.info("Creating the referent graph")
+    LOG.info(String.format("Creating the referent graph with %s arcs",arcList.length.toString))
     val g= GraphUtils.buildWeightedGraphFromTriples(arcList)
-    LOG.info("Done!")
     g
   }
 
@@ -148,7 +113,8 @@ class ReferentGraph(scoredSf2CandsMap: Map[SurfaceFormOccurrence,(List[DBpediaRe
   def getResult (k: Int): Map[SurfaceFormOccurrence,List[DBpediaResourceOccurrence]] = {
     val rankVector = runPageRank(rg)
     val tmpResult = new mutable.HashMap[SurfaceFormOccurrence,ListBuffer[DBpediaResourceOccurrence]]()
-    (0 to candidateNumber).foreach(idx => {
+    //  only from 0 to candiddateNumber-1 are for candidates, the rest are for surfaceforms, irrelavent to result
+    (0 to candidateNumber-1).foreach(idx => {
        val tuple = indexRecord(idx)
        val sfOcc = tuple._2
        val resOcc = tuple._1
@@ -156,6 +122,8 @@ class ReferentGraph(scoredSf2CandsMap: Map[SurfaceFormOccurrence,(List[DBpediaRe
        resOcc.setSimilarityScore(rank)
        tmpResult(sfOcc).append(resOcc)
     })
+
+    //well just transform listBuffer to list and sort the result, take best k, there might be better way to do this
     val result = tmpResult.foldLeft(Map[SurfaceFormOccurrence,List[DBpediaResourceOccurrence]]())( (finalMap,valuePair) =>{
       val sfOcc = valuePair._1
       val listBuf = valuePair._2
@@ -167,7 +135,7 @@ class ReferentGraph(scoredSf2CandsMap: Map[SurfaceFormOccurrence,(List[DBpediaRe
   private def runPageRank(g: ArcLabelledImmutableGraph) : Array[Double] = {
     LOG.info("Running page ranks...")
 
-    WeightedPageRankWrapper.run(g,WeightedPageRank.DEFAULT_ALPHA,false,WeightedPageRank.DEFAULT_THRESHOLD,WeightedPageRank.DEFAULT_MAX_ITER,initialVector)
+    WeightedPageRankWrapper.run(g,WeightedPageRank.DEFAULT_ALPHA,false,WeightedPageRank.DEFAULT_THRESHOLD,WeightedPageRank.DEFAULT_MAX_ITER,initialVector,preferenceVector)
 
 /*    //TODO: make parameters configurable
     val pr:WeightedPageRankPowerMethod  = new WeightedPageRankPowerMethod(g)
@@ -182,9 +150,5 @@ class ReferentGraph(scoredSf2CandsMap: Map[SurfaceFormOccurrence,(List[DBpediaRe
     //pr.stepUntil(finalStop)
 
     pr.rank*/
-  }
-
-  def subGraphIndexToUri(){
-
   }
 }
