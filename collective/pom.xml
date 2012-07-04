@@ -41,6 +41,20 @@
                     <id>disambiguate</id>
                     <mainClass>org.dbpedia.spotlight.disambiguate.GraphBasedDisambiguatorRunner</mainClass>
                     <jvmArgs>
+                        <jvmArg>-Xmx7G</jvmArg>
+                    </jvmArgs>
+                </launcher>
+                <launcher>
+                    <id>semantic</id>
+                    <mainClass>org.dbpedia.spotlight.graph.SemanticGraph</mainClass>
+                    <jvmArgs>
+                        <jvmArg>-Xmx6G</jvmArg>
+                    </jvmArgs>
+                </launcher>
+                <launcher>
+                    <id>inspect</id>
+                    <mainClass>org.dbpedia.spotlight.debug.GraphInspector</mainClass>
+                    <jvmArgs>
                         <jvmArg>-Xmx6G</jvmArg>
                     </jvmArgs>
                 </launcher>
