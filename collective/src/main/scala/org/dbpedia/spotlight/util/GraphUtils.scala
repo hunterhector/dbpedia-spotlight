@@ -70,7 +70,7 @@ object GraphUtils {
   }
 
   def buildWeightedGraphFromFile(integerListFile: File, numNodes: Int): ArcLabelledImmutableGraph = {
-    LOG.info(String.format("Creating a weigted graph"))
+    LOG.info(String.format("Creating a weighted graph"))
 
     val weightedArcArray = Source.fromFile(integerListFile).getLines().filterNot(line => line.trim() == "").filter(line => line.split("\t").length >= 3).map(line => new WeightedArc(line)).toArray
 

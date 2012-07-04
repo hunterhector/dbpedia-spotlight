@@ -19,6 +19,9 @@ class SemanticSubGraph(superGraph:ArcLabelledImmutableGraph,nodesSet: Set[Int]) 
   val supergraphNumNodes = superGraph.numNodes()
   val supergraphNode = Array.fill[Int](supergraphNumNodes)(-1)
 
+  LOG.info(String.format("Subgraph size: %s;  Supergraph size: %s.",subgraphSize.toString,supergraphNumNodes.toString))
+
+
   (0 to subgraphSize-1).foreach(i =>{
     supergraphNode(subgraphNode(i)) = i
   })
@@ -41,8 +44,7 @@ class SemanticSubGraph(superGraph:ArcLabelledImmutableGraph,nodesSet: Set[Int]) 
   }
 
   def getSemanticArcList() = {
-    LOG.info(String.format("Getting a subgraph of size %s from a supergraph of size %s.",subgraphSize.toString,supergraphNumNodes.toString))
-
+    LOG.info("Returning sub graph as arc list.")
     val tmpArcList = new ListBuffer[(Int,Int,Float)]
     val iter = superGraph.nodeIterator()
     iter.next

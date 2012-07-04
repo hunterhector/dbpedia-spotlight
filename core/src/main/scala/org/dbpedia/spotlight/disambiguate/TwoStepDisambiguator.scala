@@ -53,14 +53,14 @@ class TwoStepDisambiguator(val factory: SpotlightFactory) extends ParagraphDisam
 
     val contextIndexDir = LuceneManager.pickDirectory(new File(configuration.getContextIndexDirectory))
     val contextLuceneManager = new LuceneManager.CaseInsensitiveSurfaceForms(contextIndexDir) // use this if all surface forms in the index are lower-cased
-    val cache = JCSTermCache.getInstance(contextLuceneManager, configuration.getMaxCacheSize);
+    val cache = JCSTermCache.getInstance(contextLuceneManager, configuration.getMaxCacheSize)
     contextLuceneManager.setContextSimilarity(new CachedInvCandFreqSimilarity(cache))        // set most successful Similarity
     contextLuceneManager.setDBpediaResourceFactory(configuration.getDBpediaResourceFactory)
     contextLuceneManager.setDefaultAnalyzer(configuration.getAnalyzer)
     val contextSearcher : MergedOccurrencesContextSearcher = new MergedOccurrencesContextSearcher(contextLuceneManager)
 
     var candidateSearcher : CandidateSearcher = null //TODO move to factory
-    var candLuceneManager : LuceneManager = contextLuceneManager;
+    var candLuceneManager : LuceneManager = contextLuceneManager
     if (configuration.getCandidateIndexDirectory!=configuration.getContextIndexDirectory) {
         val candidateIndexDir = LuceneManager.pickDirectory(new File(configuration.getCandidateIndexDirectory))
         //candLuceneManager = new LuceneManager.CaseSensitiveSurfaceForms(candidateIndexDir)
@@ -125,7 +125,7 @@ class TwoStepDisambiguator(val factory: SpotlightFactory) extends ParagraphDisam
 
         val s1 = System.nanoTime()
         // step1: get candidates for all surface forms (TODO here building allCandidates directly, but could extract from occs)
-        var allCandidates = CompactHashSet[DBpediaResource]();
+        var allCandidates = CompactHashSet[DBpediaResource]()
         val occs = paragraph.occurrences
             .foldLeft( Map[SurfaceFormOccurrence,List[DBpediaResource]]())(
             (acc,sfOcc) => {

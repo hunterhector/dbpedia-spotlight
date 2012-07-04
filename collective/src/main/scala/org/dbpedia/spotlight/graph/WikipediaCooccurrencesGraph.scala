@@ -23,8 +23,6 @@ import java.io.{PrintStream, FileOutputStream, OutputStream, File}
 class WikipediaCooccurrencesGraph {
   val LOG = LogFactory.getLog(this.getClass)
 
-
-
   private def hadoopTuplesToMap(bagString:String):Map[String,Int] = {
      var targetMap = Map.empty[String,Int]
      val pattern = """\((.*?),(.*?)\)""".r
