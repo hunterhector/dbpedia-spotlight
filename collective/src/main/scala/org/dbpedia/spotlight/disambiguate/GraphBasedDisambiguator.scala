@@ -179,13 +179,11 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
 
     val rGraph = new ReferentGraph(sg, scoredSf2Cands, uri2IdxMap, teleportationConstant)
 
-    val rg = rGraph.buildReferentGraph()
-
     rGraph.getResult(k)
   }
 
   def getContextScore(paragraph: Paragraph) : Map[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)]  = {
-    LOG.info("Getting initial context scores")
+    LOG.info("Getting initial context scores.")
     val allCandidates = CompactHashSet[DBpediaResource]
 
     val sf2CandidatesMap = paragraph.occurrences.foldLeft(
@@ -214,6 +212,7 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
       acc + (resource.uri -> (resource,score))
     })
 
+    LOG.info("Building compatibe edges.")
     //build up a map for compatible edges
     val scoredSf2Cands = sf2CandidatesMap.foldLeft(Map[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)]()) (( edgesMap, sftoCands) => {
       val sfOcc = sftoCands._1
@@ -229,7 +228,6 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
       })
       edgesMap + (sfOcc -> (candOccs,getSurfaceImportance(sfOcc.surfaceForm)))
     })
-    LOG.info("Done")
     scoredSf2Cands
   }
 

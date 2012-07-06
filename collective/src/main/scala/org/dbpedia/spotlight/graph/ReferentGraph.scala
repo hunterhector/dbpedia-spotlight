@@ -39,13 +39,14 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
   private val indexRecord = new mutable.HashMap[Int,(DBpediaResourceOccurrence,SurfaceFormOccurrence)]()
   private val subSemanticGraph = getCandiddateSubGraph
 
-  private val sfNumber = s2c.size
+  private val sfNumber = s2c.keys.size
   private val candidateNumber = subSemanticGraph.subgraphSize
   private val nodeNumber = sfNumber + candidateNumber
 
   private val zeroArray = Array.fill[Double](nodeNumber)(0)
   //initial vector assign to nodes at the start of pagerank
   private val initialVector: DoubleArrayList = new DoubleArrayList(zeroArray) //build up during buildReferentArcList
+  LOG.info("Initial Norm L1 is "+l1Norm(initialVector))
   //preference vector for pagerank
   private val preferenceVector: DoubleArrayList = new DoubleArrayList(zeroArray) //should also be build up during buildReferentArcList
 
@@ -61,7 +62,7 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
       val list = occList.map(occ => uri2IdxMap.getOrElse(occ.resource.uri,-1)).filterNot(index => index == -1)
       idxSet ++ list
     })
-    LOG.info("Number of candidates: "+allCandidateIndex.size)
+    LOG.debug("Number of candidates: "+allCandidateIndex.size)
     new SemanticSubGraph(sg,allCandidateIndex)
   }
 
@@ -80,11 +81,11 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
         //connect surfaceform nodes to candidates nodes
         occList.foreach(occ => {
            val idx = uri2IdxMap.getOrElse(occ.resource.uri,-1)
-           if (idx == -1) LOG.error("Resouce not found in uriMap: "+occ.resource.uri)
+           if (idx == -1) LOG.warn("Resouce not found in uriMap: "+occ.resource.uri)
            else{
              //get the candidate index in the referent graph
              val subIdx = subSemanticGraph.fromSupergraphNode(idx)
-             indexRecord += (subIdx -> (occ,sfOcc))
+             indexRecord += (subIdx -> (occ,sfOcc))    // use to retrive the final score
              val contextualScore = occ.contextualScore
              // add a link from sf to candidate
              val tuple = (sfSubIdx,subIdx,contextualScore.toFloat)
@@ -93,17 +94,17 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
         })
         //for each surface form node, give a initial evidence
         initialVector.set(sfSubIdx,initialEvidence)
-        //preference vector the same with initial vector
-        preferenceVector.set(sfSubIdx,teleportationConstant)
+        //preference vector also to surface forms
+        preferenceVector.set(sfSubIdx,1.0/sfNumber)
         sfSubIdx += 1    //increment to add next surface form
       }
       case _ => LOG.error("Incorrect tuple in scoredSf2CandsMap") //well, this should not happen
     }
-
+    LOG.info(String.format("Referent Graph: %s nodes in total; %s candidates ; %s surfaceform.",sfSubIdx.toString,candidateNumber.toString,sfNumber.toString))
     tmpArcList.toList
   }
 
-  def buildReferentGraph() : ArcLabelledImmutableGraph = {
+  private def buildReferentGraph() : ArcLabelledImmutableGraph = {
     LOG.info(String.format("Creating the referent graph with %s arcs",arcList.length.toString))
     val g= GraphUtils.buildWeightedGraphFromTriples(arcList)
     g
@@ -120,7 +121,13 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
        val resOcc = tuple._1
        val rank = rankVector(idx)
        resOcc.setSimilarityScore(rank)
-       tmpResult(sfOcc).append(resOcc)
+       if (tmpResult.contains(sfOcc)){
+        tmpResult(sfOcc).append(resOcc)
+       }else{
+         val lsBuffer = new ListBuffer[DBpediaResourceOccurrence]
+         lsBuffer += resOcc
+         tmpResult += (sfOcc -> lsBuffer)
+       }
     })
 
     //well just transform listBuffer to list and sort the result, take best k, there might be better way to do this
@@ -132,10 +139,24 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
     result
   }
 
+  private def makeStochastic(vector:DoubleArrayList):DoubleArrayList = {
+    val l1Sum = l1Norm(vector)
+    (0 to vector.size-1)foreach(idx => {
+      val ori = vector.get(idx)
+      vector.set(idx,ori/l1Sum)
+    })
+    vector
+  }
+
+  private def l1Norm (a: DoubleArrayList): Double ={
+    a.toDoubleArray().foldLeft(0.0)((norm,v)=>{
+      norm + math.abs(v)
+    })
+  }
+
   private def runPageRank(g: ArcLabelledImmutableGraph) : Array[Double] = {
     LOG.info("Running page ranks...")
-
-    WeightedPageRankWrapper.run(g,WeightedPageRank.DEFAULT_ALPHA,false,WeightedPageRank.DEFAULT_THRESHOLD,WeightedPageRank.DEFAULT_MAX_ITER,initialVector,preferenceVector)
+    WeightedPageRankWrapper.run(g,WeightedPageRank.DEFAULT_ALPHA,true,WeightedPageRank.DEFAULT_THRESHOLD,10,makeStochastic(initialVector),preferenceVector)
 
 /*    //TODO: make parameters configurable
     val pr:WeightedPageRankPowerMethod  = new WeightedPageRankPowerMethod(g)

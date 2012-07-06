@@ -19,7 +19,7 @@ class SemanticSubGraph(superGraph:ArcLabelledImmutableGraph,nodesSet: Set[Int]) 
   val supergraphNumNodes = superGraph.numNodes()
   val supergraphNode = Array.fill[Int](supergraphNumNodes)(-1)
 
-  LOG.info(String.format("Subgraph size: %s;  Supergraph size: %s.",subgraphSize.toString,supergraphNumNodes.toString))
+  LOG.debug(String.format("Subgraph size: %s;  Supergraph size: %s.",subgraphSize.toString,supergraphNumNodes.toString))
 
 
   (0 to subgraphSize-1).foreach(i =>{
@@ -62,16 +62,14 @@ class SemanticSubGraph(superGraph:ArcLabelledImmutableGraph,nodesSet: Set[Int]) 
       (0 to outdegree-1).foreach(pos =>{
         val succIdx = succs(pos)
         val weight = labels(pos).getFloat
-        if (supergraphNode(succIdx) >= 0){
-          val t = (currIdx,succIdx,weight)
-          val tr = (succIdx,currIdx,weight)
+        if (supergraphNode(succIdx) >= 0){  // check if the successor index is in our subgraph
+          val t = (supergraphNode(currIdx),supergraphNode(succIdx),weight)
+          val tr = (supergraphNode(succIdx),supergraphNode(currIdx),weight)
           tmpArcList += t
           tmpArcList += tr
         }
       })
     })
-
-    LOG.info("Done.")
     tmpArcList
   }
 }
