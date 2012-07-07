@@ -27,7 +27,7 @@ object GraphMaker{
     //create if not exists
     createDir(baseDir)
 
-    val uriMapFile = new File(config.get("org.dbpedia.spotlight.graph.mapFile"))
+    val uriMapFile = new File(config.get("org.dbpedia.spotlight.graph.dir")+config.get("org.dbpedia.spotlight.graph.mapFile"))
 
     //Generating for occurrences files
     val occSubDir = baseDir+config.get("org.dbpedia.spotlight.graph.occ.dir")

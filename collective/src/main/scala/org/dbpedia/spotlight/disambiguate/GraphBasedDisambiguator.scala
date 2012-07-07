@@ -93,7 +93,7 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
 
   LOG.info("Loading graphs...")
   private val offline = "true" == graphConfig.getOrElse("org.dbpedia.spotlight.graph.offline","false")
-  private val uriMapFile = new File(graphConfig.get("org.dbpedia.spotlight.graph.mapFile"))
+  private val uriMapFile = new File(graphConfig.get("org.dbpedia.spotlight.graph.dir")+graphConfig.get("org.dbpedia.spotlight.graph.mapFile"))
   private val uri2IdxMap = HostMap.load(uriMapFile)
 
   LOG.info("Preparing graphs...")
