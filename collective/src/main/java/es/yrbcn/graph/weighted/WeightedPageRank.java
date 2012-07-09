@@ -347,7 +347,7 @@ public abstract class WeightedPageRank {
 			else DoubleArrays.fill( rank, 1.0 / numNodes );
 		}
 		logger.info( "There is a start vector = " + ( start != null ) );
-		
+
 		// Check the preference vector
 		if ( preference != null ) {
 			if ( preference.size() != numNodes ) throw new IllegalArgumentException( "The preference vector size (" + preference.size() + ") is different from graph dimension (" + numNodes + ")." );
@@ -383,6 +383,9 @@ public abstract class WeightedPageRank {
 				for (int j = 0; j < d; j++) {
 					sumoutweight[curr] += lab[j].getFloat();
 				}
+                if (d> 0 && sumoutweight[curr] == 0.0){
+                    throw new IllegalArgumentException("The graph should not have node with positive outdegree but a 0 sum of out weights. It is suggested that all weights should be positive");
+                }
 			}
 			
 		}

@@ -132,13 +132,12 @@ public class WeightedPageRankPowerMethod extends WeightedPageRank {
 
 		logger.info( "Completed." );
 	}
-	
+
 	/** Computes the next step of the Power Method.
 	 */
 	public void step() throws IOException {
 		double[] oldRank = rank, newRank = previousRank;
 		DoubleArrays.fill( newRank, 0.0 );
-		
 		// for each node, calculate its outdegree and redistribute its rank among pointed nodes
 		double accum = 0.0;
 		
@@ -166,7 +165,7 @@ public class WeightedPageRankPowerMethod extends WeightedPageRank {
 			progressLogger.update();
 		}
 		progressLogger.done();
-		
+
 		final double accumOverNumNodes = accum / numNodes;
 		
 		final double oneOverNumNodes = 1.0 / numNodes;
