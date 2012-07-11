@@ -4,6 +4,7 @@ import io.Source
 import org.apache.commons.logging.LogFactory
 import org.dbpedia.spotlight.model.DBpediaResource
 import java.io.{PrintStream, FileOutputStream, OutputStream, File}
+import org.dbpedia.spotlight.util.SimpleUtils
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,16 +24,6 @@ import java.io.{PrintStream, FileOutputStream, OutputStream, File}
 class WikipediaCooccurrencesGraph {
   val LOG = LogFactory.getLog(this.getClass)
 
-  private def hadoopTuplesToMap(bagString:String):Map[String,Int] = {
-     var targetMap = Map.empty[String,Int]
-     val pattern = """\((.*?),(.*?)\)""".r
-     for(m <- pattern.findAllIn(bagString).matchData) {
-      // LOG.info(m.group(1)+"\t"+m.group(2))
-       targetMap += (m.group(1) -> m.group(2).toInt)
-     }
-    targetMap
-  }
-
   def parseCooccsList(cooccsFile:File , hostMap:Map[String,Int] , integerListFile:File) = {
     LOG.info("Parsing Cooccurrences into Integer List")
 
@@ -49,7 +40,7 @@ class WikipediaCooccurrencesGraph {
            if (srcIdx == -1)
              LOG.error(String.format("Uri [%s] was not found in host map, if this happens a lot, something might be wrong",srcUri))
            else{
-             val targetMap = hadoopTuplesToMap(fields(1))
+             val targetMap = SimpleUtils.hadoopTuplesToMap(fields(1))
              targetMap.foreach{
                case(tarUri,cooccCount) => {
                  val tarIdx = hostMap.getOrElse(tarUri,-1)
@@ -58,7 +49,7 @@ class WikipediaCooccurrencesGraph {
                  else{
                    if (srcIdx != tarIdx){
                      //co-occurrences are bi-directional, but only save one direction may save space
-                     val intString = srcIdx + "\t" + tarIdx + "\t" + getWeight(srcUri, tarUri,cooccCount)
+                     val intString = srcIdx + "\t" + tarIdx + "\t" + cooccCount
                      ilfoStream.println(intString)
                    }else{
                      //LOG.warn("We don't particularly welcome self co-occurrences.")
@@ -71,8 +62,4 @@ class WikipediaCooccurrencesGraph {
       })
   }
 
-  //may have some variation here
-  private def getWeight(srcUri:String, targetUri: String, cooccCount:Int): Double = {
-    return cooccCount
-  }
 }

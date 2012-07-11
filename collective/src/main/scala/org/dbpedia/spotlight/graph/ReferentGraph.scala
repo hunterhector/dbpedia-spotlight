@@ -155,10 +155,12 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
   }
 
   private def runPageRank(g: ArcLabelledImmutableGraph) : Array[Double] = {
+    //TODO: make parameters configurable
     LOG.info("Running page ranks...")
-    WeightedPageRankWrapper.run(g,WeightedPageRank.DEFAULT_ALPHA,true,WeightedPageRank.DEFAULT_THRESHOLD,10,makeStochastic(initialVector),preferenceVector)
+    //accoding to Han, they use weakly preferential
+    WeightedPageRankWrapper.run(g,WeightedPageRank.DEFAULT_ALPHA,false,WeightedPageRank.DEFAULT_THRESHOLD,10,makeStochastic(initialVector),preferenceVector)
 
-/*    //TODO: make parameters configurable
+/*
     val pr:WeightedPageRankPowerMethod  = new WeightedPageRankPowerMethod(g)
     pr.alpha = WeightedPageRank.DEFAULT_ALPHA
     pr.stronglyPreferential = false

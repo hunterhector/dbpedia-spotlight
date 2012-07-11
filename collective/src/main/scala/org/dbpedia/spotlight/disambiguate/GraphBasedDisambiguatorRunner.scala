@@ -55,7 +55,7 @@ object GraphBasedDisambiguatorRunner {
     LOG.info("Initialization done.")
 
     val k = 5
-    val occList = process(passage, spotter, disambiguator, k)
+    val occList = process(shortPassage, spotter, disambiguator, k)
 
     for (occ <- occList) {
       println("--------------------------")
@@ -84,6 +84,12 @@ object GraphBasedDisambiguatorRunner {
     }
     bestKforOccs
   }
+
+  val shortPassage = "Soccer Aid: England glory\n\nEngland regained the Soccer Aid crown" +
+    "with a deserved 3-1 win over the Rest of the World at Old Trafford on Sunday evening.\n " +
+    "Goals from former United striker Teddy Sheringham, actor Jonathan Wilkes and ex-Sunderland" +
+    "star Kevin Phillips secured a third Soccer Aid win for the Three Lions who had earlier gone behind" +
+    "to a sublime strike from Kasabian guitarist Sergio Pizzorno.\n"
 
   val passage = "Soccer Aid: England glory\n\nEngland regained the Soccer Aid crown" +
     "with a deserved 3-1 win over the Rest of the World at Old Trafford on Sunday evening.\n " +
