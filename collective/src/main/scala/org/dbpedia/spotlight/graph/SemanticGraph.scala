@@ -14,29 +14,28 @@ import org.apache.commons.logging.LogFactory
  * Time: 8:55 PM
  */
 
-class SemanticGraph(occTranGraph: ArcLabelledImmutableGraph, cooccGraph: ArcLabelledImmutableGraph, commonInLinkGraph: ArcLabelledImmutableGraph) {
+class SemanticGraph(occTranGraph: ArcLabelledImmutableGraph, cooccsGraph: ArcLabelledImmutableGraph) {
     val LOG = LogFactory.getLog(this.getClass)
     val nodeNumber = occTranGraph.numNodes()
 
-    if (occTranGraph.numNodes() != cooccGraph.numNodes()){
+    if (occTranGraph.numNodes() != cooccsGraph.numNodes()){
       throw new InitializationException("The number of nodes of two graph are not the same")
     }
 
-    def getInlinkStats(): Map[Int,Int]= {
+    def getInlinkStats(): Map[Int,(Int,Array[Int])]= {
       LOG.info("Counting indegree statistics")
       val iter = occTranGraph.nodeIterator()
-      val map = new mutable.HashMap[Int,Int]()
+      val map = new mutable.HashMap[Int,(Int,Array[Int])]()
       (1 to nodeNumber).foreach(count =>{
         val curr = iter.nextInt
         val d = iter.outdegree
-
-        map += (curr -> d)
+        val succs = iter.successorArray().slice(0,d).sorted
+        map += (curr -> (d,succs))
         if (count%500000 == 0){
           LOG.info(String.format("%s nodes visited.",count.toString))
         }
       })
       val res = map.toMap
-      LOG.info("Done.")
       res
     }
 
@@ -45,21 +44,20 @@ class SemanticGraph(occTranGraph: ArcLabelledImmutableGraph, cooccGraph: ArcLabe
       val ilfoStream = new PrintStream(ilfo, true)
 
       val indegreeMap = getInlinkStats()
-      val commonInLinkIter = commonInLinkGraph.nodeIterator()
+      val cooccsIter = cooccsGraph.nodeIterator()
 
       LOG.info("Building integer list for semantic graph, this will take a while")
       (1 to nodeNumber).foreach(count =>{
-        val curr = commonInLinkIter.nextInt()
+        val curr = cooccsIter.nextInt()
 
-        val numOfCommonIn = commonInLinkIter.outdegree
-        val inSucc = commonInLinkIter.successorArray
-        val inLabels = commonInLinkIter.labelArray
+        val numCooccNodes = cooccsIter.outdegree
+        val cooccSucc = cooccsIter.successorArray
+        val cooccLabels = cooccsIter.labelArray
 
-        //println(String.format("number of coocc for node %s is %s",curr.toString,numOfCoocc.toString))
-        (0 to numOfCommonIn-1).foreach(idx => {
-            val succ = inSucc(idx)
-            val commonInLinkCount = inLabels(idx).getInt
-            val sr = mwSemanticRelatedness(indegreeMap(curr),indegreeMap(succ),commonInLinkCount,nodeNumber)
+        (0 to numCooccNodes-1).foreach(idx => {
+            val succ = cooccSucc(idx)
+            val cooccCount = cooccLabels(idx).getInt
+            val sr = mwSemanticRelatedness(indegreeMap(curr)._1,indegreeMap(succ)._1,indegreeMap(curr)._2,indegreeMap(succ)._2,cooccCount,nodeNumber)
             if (sr != 0.0){
               val str = curr + "\t" + succ + "\t" + sr
               ilfoStream.println(str)
@@ -72,10 +70,16 @@ class SemanticGraph(occTranGraph: ArcLabelledImmutableGraph, cooccGraph: ArcLabe
       LOG.info("Done.")
     }
 
-    private def mwSemanticRelatedness(indegreeA:Int,indegreeB:Int,commonInLinkCount:Int,wikiSize:Int) = {
+    // the return value is not necessarily allowNonNegative. if maxIn/commonInLinks > wikisize/minIn, it will return negative value
+    private def mwSemanticRelatedness(indegreeA:Int,indegreeB:Int,inlinksA:Array[Int],inlinksB:Array[Int],cooccCount:Int,wikiSize:Int) = {
+      val commonInLinks = SimpleUtils.findCommonInSortedArray(inlinksA,inlinksB)
       val maxIn = math.max(indegreeA,indegreeB)
       val minIn = math.min(indegreeA,indegreeB)
-      1-(math.log(maxIn)-math.log(commonInLinkCount))/(math.log(wikiSize) - math.log(minIn))
+      val r = 1-(math.log(maxIn)-math.log(commonInLinks))/(math.log(wikiSize) - math.log(minIn))
+      r
+//      if (r < 0){
+//        LOG.warn(String.format("The computed semantic link is less than 0, indegreeA: %s, indegreeB: %s, commonInLinks: %s",indegreeA.toString,indegreeB.toString,commonInLinks.toString))
+//      }
     }
 }
 
@@ -90,12 +94,9 @@ object SemanticGraph{
 
   private val cooccGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.coocc.dir")+graphConfig.get("org.dbpedia.spotlight.graph.coocc.basename")
   private val occTransposeGraphBaseName = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir") + graphConfig.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
-  private val inlinkGraphBaseName = baseDir + graphConfig.get("org.dbpedia.spotlight.graph.commoninlink.dir") + graphConfig.get("org.dbpedia.spotlight.graph.commoninlink.basename")
 
   private val rowg = GraphUtils.loadAsArcLablelled(occTransposeGraphBaseName, offline)
   private val cwg = GraphUtils.loadAsArcLablelled(cooccGraphBasename,offline)
-  private val ilg = GraphUtils.loadAsArcLablelled(cooccGraphBasename,offline)
-  //private val ilg  = GraphUtils.loadAsArcLablelled(inlinkGraphBaseName,offline)
 
 
   //preparing output graph
@@ -105,7 +106,7 @@ object SemanticGraph{
   private val sgIntegerListFileName = sgSubDir+graphConfig.get("org.dbpedia.spotlight.graph.semantic.integerList")
 
    def main(args:Array[String]){
-     val sg = new SemanticGraph(rowg,cwg,ilg)
+     val sg = new SemanticGraph(rowg,cwg)
 
      val sgFile = new File(sgIntegerListFileName)
 
