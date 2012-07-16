@@ -30,6 +30,7 @@ class WikipediaCooccurrencesGraph {
     val ilfo: OutputStream = new FileOutputStream(integerListFile)
     val ilfoStream = new PrintStream(ilfo, true)
 
+    var count = 0
     Source.fromFile(cooccsFile).getLines().filterNot(line => line.trim() == "").foreach(
       line => {
          val fields = line.split("\\t")
@@ -59,6 +60,8 @@ class WikipediaCooccurrencesGraph {
              }
            }
          }else  LOG.error("Invailid line in file at \n -> \t" + line)
+      count += 1
+      if (count % 100000 == 0) LOG.info(String.format("%s lines processed.",count.toString))
       })
   }
 

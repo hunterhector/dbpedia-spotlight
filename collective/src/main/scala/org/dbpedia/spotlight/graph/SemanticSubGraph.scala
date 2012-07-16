@@ -14,6 +14,7 @@ import collection.mutable.ListBuffer
 class SemanticSubGraph(superGraph:ArcLabelledImmutableGraph,nodesSet: Set[Int]) {
   val LOG = LogFactory.getLog(this.getClass)
 
+  var allowNonPositive = false
   val subgraphNode = setToSortedArray()
   val subgraphSize = subgraphNode.length
   val supergraphNumNodes = superGraph.numNodes()
@@ -31,6 +32,10 @@ class SemanticSubGraph(superGraph:ArcLabelledImmutableGraph,nodesSet: Set[Int]) 
 
   private def setToSortedArray():Array[Int] = {
     nodesSet.toArray.sorted
+  }
+
+  def allowNegative() {
+    allowNonPositive = true
   }
 
   def toSupergraphNode(x:Int):Int = {
@@ -59,14 +64,18 @@ class SemanticSubGraph(superGraph:ArcLabelledImmutableGraph,nodesSet: Set[Int]) 
       val outdegree = iter.outdegree()
       val succs = iter.successorArray()
       val labels = iter.labelArray()
+
       (0 to outdegree-1).foreach(pos =>{
         val succIdx = succs(pos)
         val weight = labels(pos).getFloat
+
         if (supergraphNode(succIdx) >= 0){  // check if the successor index is in our subgraph
-          val t = (supergraphNode(currIdx),supergraphNode(succIdx),weight)
-          val tr = (supergraphNode(succIdx),supergraphNode(currIdx),weight)
-          tmpArcList += t
-          tmpArcList += tr
+          if (allowNonPositive || weight > 0.0){
+            val t = (supergraphNode(currIdx),supergraphNode(succIdx),weight)
+            val tr = (supergraphNode(succIdx),supergraphNode(currIdx),weight)
+            tmpArcList += t
+            tmpArcList += tr
+          }
         }
       })
     })

@@ -139,15 +139,17 @@ object GraphInspector {
   def checkSubGraph(g: ArcLabelledImmutableGraph,set:Set[Int]) {
 
     val sg = new SemanticSubGraph(g,set)
-    println (sg.getSemanticArcList())
+    val arcList =  sg.getSemanticArcList()
+    arcList.foreach(println)
   }
 
   def main(args:Array[String]) {
-    checkStats()
-    checkNode(owg,0)
-    checkNode(owg,1)
-    checkNode(owg,2)
-    checkNode(owg,3823752)
-    checkSubGraph(owg,Set(0,1,2,3823752))
+//    checkStats()
+//    checkNode(owg,0)
+//    checkNode(owg,1)
+//    checkNode(owg,2)
+//    checkNode(owg,3823752)
+    checkNode(sg,249)
+    checkSubGraph(sg,Set(0,1,2,3,187,249,3823752))
   }
 }

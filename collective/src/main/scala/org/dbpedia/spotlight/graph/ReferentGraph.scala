@@ -88,8 +88,10 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
              indexRecord += (subIdx -> (occ,sfOcc))    // use to retrive the final score
              val contextualScore = occ.contextualScore
              // add a link from sf to candidate
-             val tuple = (sfSubIdx,subIdx,contextualScore.toFloat)
-             tmpArcList += tuple
+             if (contextualScore > 0.0) {
+               val tuple = (sfSubIdx,subIdx,contextualScore.toFloat)
+               tmpArcList += tuple
+             }
            }
         })
         //for each surface form node, give a initial evidence

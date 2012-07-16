@@ -61,6 +61,7 @@ object GraphMaker{
     GraphUtils.storeWeightedGraph(cowg,cooccBaseName)
   }
 
+  //might be useless
   def makeCommonInlinkGraph(hostMap: Map[String,Int], baseDir:String, config:GraphConfiguration){
     val inlinkSubDir = baseDir + config.get("org.dbpedia.spotlight.graph.commoninlink.dir")
     SimpleUtils.createDir(inlinkSubDir)
@@ -101,6 +102,5 @@ object GraphMaker{
 
     makeOccsGraph(uriMapFile,occsSrcFile,hostMap,baseDir,config)
     makeCooccGraph(hostMap,baseDir,config)
-    makeCommonInlinkGraph(hostMap,baseDir,config)
   }
 }
