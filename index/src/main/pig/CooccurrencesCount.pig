@@ -33,26 +33,26 @@ coOccsById = GROUP cleanedDocEntPairs BY reducedId;
 entityPairs = FOREACH coOccsById {
 	uri = cleanedDocEntPairs.uri;
 	sortedUri = order uri by uri;
-	generate flatten(sortedUri) AS (ent1) ,flatten(sortedUri) AS (ent2);
+	generate flatten(sortedUri) AS (src) ,flatten(sortedUri) AS (tar);
 };
 
 -- Self co-occurrences are not desired
-cleanedPairs = FILTER entityPairs BY ent1!= ent2;
+cleanedPairs = FILTER entityPairs BY src!= tar;
 
 --Group by entity co-occured pair
-groupedPairs = GROUP cleanedPairs BY (ent1,ent2);
+groupedPairs = GROUP cleanedPairs BY (src,tar);
 
 -- Count the entity pairs
-cnt = FOREACH groupedPairs GENERATE group.ent1,group.ent2, COUNT(cleanedPairs) AS count;
+cnt = FOREACH groupedPairs GENERATE group.src,group.tar, COUNT(cleanedPairs) AS count;
 
 -- Cooccurrences less than $minCount will be removed
 reducedCnt = FILTER cnt BY count>=$minCount;
 
 -- Group into a ajancency list
-adjLists = GROUP reducedCnt BY ent1;
+adjLists = GROUP reducedCnt BY src;
 
 -- Format to a JSON like format 
-JSONAdjLists = FOREACH adjLists GENERATE group AS src,reducedCnt.(ent2,count) AS counts;
+JSONAdjLists = FOREACH adjLists GENERATE group AS src,reducedCnt.(tar,count) AS counts;
 
 describe JSONAdjLists;
 
