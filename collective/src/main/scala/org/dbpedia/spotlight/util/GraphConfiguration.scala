@@ -46,6 +46,7 @@ class GraphConfiguration(val configFile:File) {
     value
   }
 
+  //better not use this
   def setNodeNumber(n:Int) {
      properties.setProperty("org.dbpedia.spotlight.graph.nodeNumber",n.toString)
      save()

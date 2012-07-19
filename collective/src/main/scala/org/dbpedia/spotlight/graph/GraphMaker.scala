@@ -1,10 +1,10 @@
 package org.dbpedia.spotlight.graph
 
-import java.io.File
+import java.io.{PrintWriter, File}
 import es.yrbcn.graph.weighted.WeightedBVGraph
 import org.dbpedia.spotlight.util.{SimpleUtils, GraphConfiguration, GraphUtils}
 import org.apache.commons.logging.LogFactory
-
+import scala.io.Source
 /**
  * Created with IntelliJ IDEA.
  * User: hector
@@ -95,7 +95,8 @@ object GraphMaker{
 
     //Generate the host map
     val numberOfNodes = HostMap.parseToHostMap(occsSrcFile,uriMapFile)
-    config.setNodeNumber(numberOfNodes)
+    val outWriter = new PrintWriter(new File(config.get("org.dbpedia.spotlight.graph.dir")+"/nodenuber"))
+    outWriter.println(numberOfNodes)
 
     //Get the host map
     val hostMap = HostMap.load(uriMapFile)
