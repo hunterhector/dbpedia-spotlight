@@ -58,4 +58,4 @@ describe JSONAdjLists;
 
 -- Write out
 -- Consider use JSONStorage
-STORE JSONAdjLists INTO '$outDir/co-occs-count.tsv' USING JsonStorage();
+STORE JSONAdjLists INTO '$outDir/co-occs-count.json' USING JsonStorage();
