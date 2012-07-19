@@ -1,6 +1,7 @@
 package org.dbpedia.spotlight.util
 
 import java.io.File
+import net.sf.json.JSONObject
 
 /**
  * Created with IntelliJ IDEA.
@@ -10,7 +11,6 @@ import java.io.File
  */
 
 object SimpleUtils {
-  //TODO: this should be replaced by a function to handle the JSON format
   def hadoopTuplesToMap(bagString:String):Map[String,Int] = {
     var targetMap = Map.empty[String,Int]
     val pattern = """\((.*?),(.*?)\)""".r
@@ -19,6 +19,17 @@ object SimpleUtils {
       targetMap += (m.group(1) -> m.group(2).toInt)
     }
     targetMap
+  }
+
+  def mapFromJSONFile(srcFile:File):Map[String,Int] ={
+    val srcString = io.Source.fromFile(srcFile).mkString
+    mapFromJSONString(srcString)
+  }
+
+  //TODO: method to read JSON as Map
+  def mapFromJSONString(str:String):Map[String,Int] ={
+    val jsonObj = JSONObject.fromObject(str)
+    null
   }
 
   def createDir(dirName:String){

@@ -31,6 +31,7 @@ class WikipediaCooccurrencesGraph {
     val ilfoStream = new PrintStream(ilfo, true)
 
     var count = 0
+    //TODO: handle file as JSON object
     Source.fromFile(cooccsFile).getLines().filterNot(line => line.trim() == "").foreach(
       line => {
          val fields = line.split("\\t")
