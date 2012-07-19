@@ -1,6 +1,6 @@
 package org.dbpedia.spotlight.util
 
-import java.io.{FileOutputStream, FileInputStream, File}
+import java.io.{FileNotFoundException, FileOutputStream, FileInputStream, File}
 import org.apache.commons.logging.LogFactory
 import java.util.Properties
 import org.dbpedia.spotlight.exceptions.ConfigurationException
@@ -15,6 +15,12 @@ import org.dbpedia.spotlight.exceptions.ConfigurationException
 class GraphConfiguration(val configFile:File) {
 
   private val LOG = LogFactory.getLog(this.getClass)
+
+  if (get("org.dbpedia.spotlight.graph.validation") == "index"){
+    indexValidate
+  } else{
+    runValidate
+  }
 
   def this(fileName: String) {
     this(new File(fileName))
@@ -39,10 +45,17 @@ class GraphConfiguration(val configFile:File) {
   }
 
   def get(key : String) : String = {
-    val value = getOrElse(key, null)
+    var value = getOrElse(key, null)
     if (value == null) {
        throw new ConfigurationException(key + "not specified in "+configFile)
     }
+
+    if (key.endsWith(".dir")) {
+      if (!value.endsWith("/")){
+        value += "/"
+    }
+    }
+
     value
   }
 
@@ -59,4 +72,48 @@ class GraphConfiguration(val configFile:File) {
 
      r
   }
+
+  private def indexValidate:Boolean = {
+    LOG.info("Validating for indexing, to validate run, change 'org.dbpedia.spotlight.graph.validation' to 'run'.")
+
+    val filesToCheck = List(
+     get("org.dbpedia.spotlight.graph.dir") ,
+     get("org.dbpedia.spotlight.graph.occ.src") ,
+     get("org.dbpedia.spotlight.graph.coocc.src")
+    )
+    filesToCheck.foreach( name =>{
+      try{
+        val test:File = new File(name)
+      }catch{
+        case fnfe : FileNotFoundException => LOG.error(String.format("A file pointed by the graph properties does not exist: %s",name))
+        return false
+      }
+    }
+    )
+    true
+  }
+
+  private def runValidate:Boolean = {
+    LOG.info("Validating for run, to validate indexing, change 'org.dbpedia.spotlight.graph.validation' to 'index'.")
+
+    val filesToCheck = List(
+     get("org.dbpedia.spotlight.graph.dir") ,
+     get("org.dbpedia.spotlight.graph.dir")+get("org.dbpedia.spotlight.graph.mapFile") ,
+     get("org.dbpedia.spotlight.graph.dir") + get("org.dbpedia.spotlight.graph.semantic.dir")+get("org.dbpedia.spotlight.graph.semantic.basename")+"properties"
+
+    )
+    filesToCheck.foreach( name =>{
+      try{
+        val test:File = new File(name)
+      }catch{
+        case fnfe : FileNotFoundException => LOG.error(String.format("A file pointed by the graph properties does not exist: %s",name))
+        return false
+      }
+    }
+    )
+    true
+  }
+
+
+
 }
