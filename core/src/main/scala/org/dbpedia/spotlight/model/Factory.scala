@@ -46,6 +46,7 @@ import org.dbpedia.spotlight.disambiguate._
 import org.dbpedia.spotlight.annotate.{DefaultParagraphAnnotator, DefaultAnnotator}
 import scalaj.collection.Imports._
 import org.dbpedia.spotlight.lucene.analysis.PhoneticAnalyzer
+import java.util
 
 /**
  * Class containing methods to create model objects in many different ways
@@ -88,10 +89,10 @@ object Factory {
                 -1,         // there is no way to know percentage of second here
                 score)      // to be set later
         }
-        def from(sfOcc: SurfaceFormOccurrence, resource: DBpediaResource, score: Tuple2[Int,Double]) = {
+        def from(sfOcc: SurfaceFormOccurrence, fullResource: DBpediaResource, score: Tuple2[Int,Double]) = {
             //TODO can take a mixture as param and use resource.score to mix with the other two scores in Tuple2
             new DBpediaResourceOccurrence("",  // there is no way to know this here
-                new DBpediaResource(resource.uri, score._1),
+                fullResource, // support is also available from score._1, but types are only in fullResource
                 sfOcc.surfaceForm,
                 sfOcc.context,
                 sfOcc.textOffset,
@@ -157,6 +158,17 @@ object Factory {
                 //The default type for non-prefixed type strings:
                 case e: scala.MatchError => new DBpediaType(ontologyType)
             }
+        }
+
+        def fromCSVString(ontologyTypesString: String) : List[OntologyType] = {
+//            val ontologyTypes: java.util.List[OntologyType] = new java.util.ArrayList[OntologyType]
+//            val types: Array[String] = ontologyTypesString.trim.split(",")
+//            for (t <- types) {
+//                if (!(t.trim == "")) ontologyTypes.add(Factory.ontologyType.fromQName(t.trim))
+//            }
+//            ontologyTypes
+            val types = ontologyTypesString.split(",").filterNot(t => t.trim.isEmpty)
+            if (types.size>0) types.map(Factory.ontologyType.fromQName).toList else List[OntologyType]()
         }
     }
 
@@ -241,7 +253,9 @@ object Factory {
             case DBpediaResourceField.URI_COUNT =>
                 resource.setSupport(document.getField(field.name).stringValue.toInt)
             case DBpediaResourceField.TYPE =>
-                resource.setTypes(document.getValues(field.name).map( t => OntologyType.fromQName(t) ).toList)
+                resource.setTypes(document.getValues(field.name)
+                    .filterNot(t => t.equalsIgnoreCase("http://www.w3.org/2002/07/owl#Thing"))
+                    .map( t => OntologyType.fromQName(t) ).toList)
             case _ =>
         }
     }

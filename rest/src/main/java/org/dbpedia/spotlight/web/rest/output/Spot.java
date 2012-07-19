@@ -1,5 +1,5 @@
 /**
- * Copyright 2011 Pablo Mendes, Max Jakob
+ * Copyright 2011 DBpedia Spotlight Team 
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,9 +64,9 @@ public class Spot {
         Spot spot = new Spot();
         spot.setName(sfOcc.surfaceForm().name());
         spot.setOffset(sfOcc.textOffset());
-        Feature typeFeature = sfOcc.features().get("type");
+        String typeFeature = (String) sfOcc.featureValue("type").get();
         if (typeFeature != null)
-            spot.setNerType(typeFeature.value().toString());
+            spot.setNerType(typeFeature);
         return spot;
     }
 

@@ -38,12 +38,13 @@ import scala.collection.JavaConversions._
  * @author maxjakob
  * @author pablomendes
  */
-class DefaultDisambiguator(val factory: SpotlightFactory) extends Disambiguator with ParagraphDisambiguator  {
+class DefaultDisambiguator(val contextSearcher: ContextSearcher) extends Disambiguator with ParagraphDisambiguator  {
 
     private val LOG = LogFactory.getLog(this.getClass)
 
     LOG.info("Initializing disambiguator object ...")
-    val disambiguator : Disambiguator = new MergedOccurrencesDisambiguator(factory.searcher)
+
+    val disambiguator : Disambiguator = new MergedOccurrencesDisambiguator(contextSearcher)
 
     LOG.info("Done.")
 
@@ -70,7 +71,7 @@ class DefaultDisambiguator(val factory: SpotlightFactory) extends Disambiguator 
      * @throws org.dbpedia.spotlight.exceptions.InputException
      */
     def disambiguate(paragraph: Paragraph): List[DBpediaResourceOccurrence] = {
-        asScalaBuffer(disambiguator.disambiguate(paragraph.occurrences.asJava)).toList
+        asBuffer(disambiguator.disambiguate(paragraph.occurrences.asJava)).toList
     }
 
     /**

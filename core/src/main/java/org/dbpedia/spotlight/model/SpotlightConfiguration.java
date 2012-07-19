@@ -46,14 +46,14 @@ public class SpotlightConfiguration {
     //TODO could get all of these from configuration file
 	public final static String DEFAULT_TEXT = "";
     public final static String DEFAULT_URL = "";
-	public final static String DEFAULT_CONFIDENCE = "0.5";
-	public final static String DEFAULT_SUPPORT = "30";
+    public final static String DEFAULT_CONFIDENCE = "0.1";
+	public final static String DEFAULT_SUPPORT = "10";
 	public final static String DEFAULT_TYPES = "";
 	public final static String DEFAULT_SPARQL = "";
 	public final static String DEFAULT_POLICY = "whitelist";
 	public final static String DEFAULT_COREFERENCE_RESOLUTION = "true";
+    public static String DEFAULT_NAMESPACE = "http://dbpedia.org/resource/";
 
-    //TODO Hector: This policy does not reside in DisambiguatorConfiguration, but SpotlighPolicy resides in SpotlighConfiguration, looks strange
     public enum DisambiguationPolicy { Document,Occurrences,CuttingEdge,Default }
 
     public String language;
@@ -161,7 +161,9 @@ public class SpotlightConfiguration {
 			throw new ConfigurationException("Cannot find configuration file "+fileName,e);
 		}
 
-		//Read the spotter configuration from the properties file
+        DEFAULT_NAMESPACE = config.getProperty("org.dbpedia.spotlight.default_namespace",DEFAULT_NAMESPACE);
+
+        //Read the spotter configuration from the properties file
 		spotterConfiguration = new SpotterConfiguration(fileName);
 
         disambiguatorConfiguration = new DisambiguatorConfiguration(fileName);

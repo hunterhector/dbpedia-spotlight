@@ -16,19 +16,21 @@
 
 package org.dbpedia.spotlight.model
 
-import java.util.HashMap
-
 class SurfaceFormOccurrence(val surfaceForm : SurfaceForm,
                             val context : Text,
-                            val textOffset : Int,
+                            var textOffset : Int,
                             val provenance : Provenance.Value,
-                            var spotProb : Double = -1)
+                            var spotProb : Double = -1) extends HasFeatures
 {
-    val features = new HashMap[String,Feature]()
+
 
     def this(surfaceForm : SurfaceForm, context : Text, textOffset : Int) =
     {
         this(surfaceForm, context, textOffset, provenance = Provenance.Undefined)
+    }
+
+    def setTextOffset(newTextOffset: Int) {
+        textOffset = newTextOffset
     }
 
     override def equals(that : Any) : Boolean =

@@ -54,7 +54,7 @@ public class SpotterConfiguration {
         CoOccurrenceBasedSelector,
         NESpotter,
         KeyphraseSpotter,
-       // OpenNLPChunkerSpotter
+        OpenNLPChunkerSpotter,
         WikiMarkupSpotter,
         SpotXmlParser
     }
@@ -170,6 +170,19 @@ public class SpotterConfiguration {
 
     public String getOpenNLPModelDir() {
         return config.getProperty("org.dbpedia.spotlight.spot.opennlp.dir");
+    }
+
+    // /data/spotlight/3.7/kea/keaModel-1-3-1
+    public String getKeaModel() {
+        return config.getProperty("org.dbpedia.spotlight.spot.kea.model");
+    }
+
+    public int getKeaMaxNumberOfPhrases() {
+        return new Integer(config.getProperty("org.dbpedia.spotlight.spot.kea.maxNumberOfPhrases","1000"));
+    }
+
+    public int getKeaCutoff() {
+        return new Integer(config.getProperty("org.dbpedia.spotlight.spot.kea.cutoff","-1"));
     }
 
     public List<SpotterPolicy> getSpotterPolicies() throws ConfigurationException {

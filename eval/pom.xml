@@ -46,6 +46,16 @@
                 <configuration>
                     <launchers>
                         <launcher>
+                            <id>pareval</id>
+                            <mainClass>org.dbpedia.spotlight.evaluation.EvaluateParagraphDisambiguator</mainClass>
+                            <args>
+                                <arg>../conf/disambigonly.properties</arg>
+                            </args>
+                            <jvmArgs>
+                                <jvmArg>-Xmx14G</jvmArg>
+                            </jvmArgs>
+                        </launcher>
+                        <launcher>
                             <id>stats</id>
                             <mainClass>org.dbpedia.spotlight.corpora.StatsCommonVsNoCommonCompressed</mainClass>
                             <args>
@@ -55,19 +65,8 @@
                                 <jvmArg>-Xmx14G</jvmArg>
                             </jvmArgs>
                         </launcher>
-                    </launchers>
-                </configuration>
-            </plugin>
-
-
-            <plugin>
-                <groupId>org.scala-tools</groupId>
-                <artifactId>maven-scala-plugin</artifactId>
-
-                <configuration>
-                    <launchers>
                         <launcher>
-                            <id>Server</id>
+                            <id>spottereval</id>
                             <mainClass>org.dbpedia.spotlight.evaluation.SpotterEvaluatorPrecisionRecall</mainClass>
                             <jvmArgs>
                                 <jvmArg>${heapspace.Xmx.server}</jvmArg>
