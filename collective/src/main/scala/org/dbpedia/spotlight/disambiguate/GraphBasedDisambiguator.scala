@@ -237,11 +237,21 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
     val cf = contextSearcher.getContextFrequency(sf)
     var icf = 0.0
     if (cf > 0){
-      icf  = contextSearcher.getNumberOfResources/cf
-      LOG.warn("Can't find context frequency for surface form, give 0 importance"+sf.toString)
+      icf  = math.log(contextSearcher.getNumberOfResources/cf)
+    }else{
+      LOG.warn("Can't find context frequency for surface form, set icf to 0"+sf.toString)
     }
+
+/*  //TODO: Frequency search give 0
     val tf = contextSearcher.getFrequency(sf)
-    val sfImportance = tf*icf
+    var loggedTf = 0.0
+    if (tf > 0){
+      loggedTf = math.log(tf)
+    }else{
+      LOG.warn("Can't find frequencey for surface form, set tf to 0"+sf.toString)
+    }*/
+    LOG.debug(String.format("For the surface form: %s, context frequency is %s",sf.toString,icf.toString))
+    val sfImportance = icf
     sfImportance
   }
 
