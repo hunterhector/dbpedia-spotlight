@@ -62,8 +62,12 @@ object GraphBasedDisambiguatorRunner {
       val surOcc = occ._1
       val candidates = occ._2
       println("Surface form spotted: " + surOcc.surfaceForm)
-      println("Showing the best " + k + "(if any) candidates for this surface form:")
-      candidates.foreach(candidate => println(String.format("\t-->%s,%s,Similarity Score:%s,Contextual Score:%s,Precentage of Second Rank:%s",candidate.surfaceForm, candidate.resource, candidate.similarityScore.toString, candidate.contextualScore.toString, candidate.percentageOfSecondRank.toString)))
+      if (candidates.length > 0){
+        val originRanks = candidates.sortBy(o=>o.contextualScore)
+        println(String.format("===Original best is: %s, Adjusted Best is: %s===",originRanks(0).resource,candidates(0).resource))
+        println("Showing the best " + k + "(if any) candidates for this surface form:")
+        candidates.foreach(candidate => println(String.format("\t-->%s,%s,Similarity Score:%s,Contextual Score:%s,Precentage of Second Rank:%s",candidate.surfaceForm, candidate.resource, candidate.similarityScore.toString, candidate.contextualScore.toString, candidate.percentageOfSecondRank.toString)))
+      }
     }
   }
 
