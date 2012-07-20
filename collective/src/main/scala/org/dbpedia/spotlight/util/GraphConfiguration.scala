@@ -16,12 +16,6 @@ class GraphConfiguration(val configFile:File) {
 
   private val LOG = LogFactory.getLog(this.getClass)
 
-  if (get("org.dbpedia.spotlight.graph.validation") == "index"){
-    indexValidate
-  } else{
-    runValidate
-  }
-
   def this(fileName: String) {
     this(new File(fileName))
   }
@@ -30,6 +24,12 @@ class GraphConfiguration(val configFile:File) {
 
   LOG.info("Loading configuration file "+configFile)
   properties.load(new FileInputStream(configFile))
+
+  if (get("org.dbpedia.spotlight.graph.validation") == "index"){
+    indexValidate
+  } else{
+    runValidate
+  }
 
   def save(configFile : File) {
     properties.store(new FileOutputStream(configFile),"")
