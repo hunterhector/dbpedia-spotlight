@@ -102,12 +102,12 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
 //  private val cooccGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.coocc.dir")+graphConfig.get("org.dbpedia.spotlight.graph.coocc.basename")
 //  private val occTransposeGraphBaseName = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir") + graphConfig.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
   private val sgSubDir = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.semantic.dir")
-  private val sgBasename = sgSubDir+graphConfig.get("org.dbpedia.spotlight.graph.semantic.basename")
+  private val sgBasename = graphConfig.get("org.dbpedia.spotlight.graph.semantic.basename")
 
 //  private val owg = GraphUtils.loadAsArcLablelled(occGraphBasename,offline)
 //  private val rowg = GraphUtils.loadAsArcLablelled(occTransposeGraphBaseName, offline)
 //  private val cwg = GraphUtils.loadAsArcLablelled(cooccGraphBasename,offline)
-  private val sg = GraphUtils.loadAsArcLablelled(sgBasename,offline)
+  private val sg = GraphUtils.loadAsArcLablelled(sgSubDir,sgBasename,offline)
 
   LOG.info("Loading other parameters...")
   private val teleportationConstant = graphConfig.getOrElse("org.dbpedia.spotlight.graph.pagerank.teleportation","0.1").toFloat
@@ -212,7 +212,7 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
       acc + (resource.uri -> (resource,score))
     })
 
-    LOG.info("Building compatibe edges.")
+    LOG.info("Building compatible edges.")
     //build up a map for compatible edges
     val scoredSf2Cands = sf2CandidatesMap.foldLeft(Map[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)]()) (( edgesMap, sftoCands) => {
       val sfOcc = sftoCands._1
@@ -234,7 +234,14 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
   //could be represented by TF.ICF, TF.IDF or Normalized ones
   //we implement TF.ICF here, because it is more likely to capture the importance of a surface form
   def getSurfaceImportance(sf: SurfaceForm): Double = {
-    val sfImportance = 1.0
+    val cf = contextSearcher.getContextFrequency(sf)
+    var icf = 0.0
+    if (cf > 0){
+      icf  = contextSearcher.getNumberOfResources/cf
+      LOG.warn("Can't find context frequency for surface form, give 0 importance"+sf.toString)
+    }
+    val tf = contextSearcher.getFrequency(sf)
+    val sfImportance = tf*icf
     sfImportance
   }
 

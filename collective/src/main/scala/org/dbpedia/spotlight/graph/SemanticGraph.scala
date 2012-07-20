@@ -92,17 +92,20 @@ object SemanticGraph{
   LOG.info("Preparing graphs...")
   private val baseDir = graphConfig.get("org.dbpedia.spotlight.graph.dir")
 
-  private val cooccGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.coocc.dir")+graphConfig.get("org.dbpedia.spotlight.graph.coocc.basename")
-  private val occTransposeGraphBaseName = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir") + graphConfig.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
+  private val cooccSubDir = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.coocc.dir")
+  private val cooccGraphBasename = graphConfig.get("org.dbpedia.spotlight.graph.coocc.basename")
 
-  private val rowg = GraphUtils.loadAsArcLablelled(occTransposeGraphBaseName, offline)
-  private val cwg = GraphUtils.loadAsArcLablelled(cooccGraphBasename,offline)
+  private val occTransposeSubDir = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir")
+  private val occTransposeGraphBaseName = graphConfig.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
+
+  private val rowg = GraphUtils.loadAsArcLablelled(occTransposeSubDir,occTransposeGraphBaseName, offline)
+  private val cwg = GraphUtils.loadAsArcLablelled(cooccSubDir,cooccGraphBasename,offline)
 
 
   //preparing output graph
   private val sgSubDir = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.semantic.dir")
   SimpleUtils.createDir(sgSubDir)
-  private val sgBasename = sgSubDir+graphConfig.get("org.dbpedia.spotlight.graph.semantic.basename")
+  private val sgBasename = graphConfig.get("org.dbpedia.spotlight.graph.semantic.basename")
   private val sgIntegerListFileName = sgSubDir+graphConfig.get("org.dbpedia.spotlight.graph.semantic.integerList")
 
    def main(args:Array[String]){
@@ -114,6 +117,6 @@ object SemanticGraph{
 
      val g = GraphUtils.buildWeightedGraphFromFile(sgFile,graphConfig.getNodeNumber)
 
-     GraphUtils.storeWeightedGraph(g,sgBasename)
+     GraphUtils.storeWeightedGraph(g,sgSubDir,sgBasename)
    }
 }

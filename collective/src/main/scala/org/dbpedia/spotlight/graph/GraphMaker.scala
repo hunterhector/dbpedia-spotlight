@@ -24,7 +24,7 @@ object GraphMaker{
     SimpleUtils.createDir(occSubDir)
 
     val occInterListFile = new File(occSubDir+config.get("org.dbpedia.spotlight.graph.occ.integerList"))
-    val occBaseName = occSubDir + config.get("org.dbpedia.spotlight.graph.occ.basename")
+    val occBaseName = config.get("org.dbpedia.spotlight.graph.occ.basename")
 
     //parse the occSrcFile and store the parsed result as an IntegerList
     val wog = new WikipediaOccurrenceGraph
@@ -32,14 +32,14 @@ object GraphMaker{
 
     //build a weighted graph and store
     val ocwg = GraphUtils.buildWeightedGraphFromFile(occInterListFile)
-    GraphUtils.storeWeightedGraph(ocwg,occBaseName)
+    GraphUtils.storeWeightedGraph(ocwg,occSubDir,occBaseName)
 
-    val occTransposeBaseName = occSubDir + config.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
+    val occTransposeBaseName = config.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
     val batchSize = config.get("org.dbpedia.spotlight.graph.transpose.batchSize").toInt
 
     //also store the transpose graph, easy to use outdegree to find the indegree of a node in the origin graph
     val ocwgTrans = GraphUtils.transpose(ocwg,batchSize)
-    GraphUtils.storeWeightedGraph(ocwgTrans,occTransposeBaseName)
+    GraphUtils.storeWeightedGraph(ocwgTrans,occSubDir,occTransposeBaseName)
   }
 
   def makeCooccGraph(hostMap: Map[String,Int], baseDir:String, config:GraphConfiguration){
@@ -49,7 +49,7 @@ object GraphMaker{
 
     val cooccsSrcFile = new File(config.get("org.dbpedia.spotlight.graph.coocc.src"))
     val cooccInterListFile = new File(cooccSubDir+config.get("org.dbpedia.spotlight.graph.coocc.integerList"))
-    val cooccBaseName = cooccSubDir + config.get("org.dbpedia.spotlight.graph.coocc.basename")
+    val cooccBaseName = config.get("org.dbpedia.spotlight.graph.coocc.basename")
 
     //parse the cooccsSrcFile and store the parsed result as an IntegerList
     val wcg = new WikipediaCooccurrencesGraph
@@ -58,7 +58,7 @@ object GraphMaker{
     //build a weighted graph and store.
     //We should use the method that specify a node number, which make it possible to have nodes with no arcs
     val cowg = GraphUtils.buildWeightedGraphFromFile(cooccInterListFile,config.getNodeNumber)
-    GraphUtils.storeWeightedGraph(cowg,cooccBaseName)
+    GraphUtils.storeWeightedGraph(cowg,cooccSubDir,cooccBaseName)
   }
 
   //might be useless
@@ -68,7 +68,7 @@ object GraphMaker{
 
     val inlinkSrcFile = new File(config.get("org.dbpedia.spotlight.graph.commoninlink.src"))
     val inlinkIntegerListFile = new File(inlinkSubDir+config.get("org.dbpedia.spotlight.graph.commoninlink.integerList"))
-    val inlinkBaseName = inlinkSubDir + config.get("org.dbpedia.spotlight.graph.commoninlink.basename")
+    val inlinkBaseName = config.get("org.dbpedia.spotlight.graph.commoninlink.basename")
 
     //parse to IntegerList
     val wcg = new WikipediaCooccurrencesGraph //also use the coocurrence graph class becuz they are essential the same concept, but with different data
@@ -76,7 +76,7 @@ object GraphMaker{
 
     //build the graph and store with node number
     val cilg = GraphUtils.buildWeightedGraphFromFile(inlinkIntegerListFile,config.getNodeNumber)
-    GraphUtils.storeWeightedGraph(cilg,inlinkBaseName)
+    GraphUtils.storeWeightedGraph(cilg,inlinkSubDir,inlinkBaseName)
   }
 
 

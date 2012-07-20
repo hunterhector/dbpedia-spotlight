@@ -46,7 +46,6 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
   private val zeroArray = Array.fill[Double](nodeNumber)(0)
   //initial vector assign to nodes at the start of pagerank
   private val initialVector: DoubleArrayList = new DoubleArrayList(zeroArray) //build up during buildReferentArcList
-  LOG.info("Initial Norm L1 is "+l1Norm(initialVector))
   //preference vector for pagerank
   private val preferenceVector: DoubleArrayList = new DoubleArrayList(zeroArray) //should also be build up during buildReferentArcList
 
@@ -100,7 +99,7 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
         preferenceVector.set(sfSubIdx,1.0/sfNumber)
         sfSubIdx += 1    //increment to add next surface form
       }
-      case _ => LOG.error("Incorrect tuple in scoredSf2CandsMap") //well, this should not happen
+      case _ => LOG.error("Incorrect tuple in uriMap") //well, this should not happen
     }
     LOG.info(String.format("Referent Graph: %s nodes in total; %s candidates ; %s surfaceform.",sfSubIdx.toString,candidateNumber.toString,sfNumber.toString))
     tmpArcList.toList
@@ -108,7 +107,7 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
 
   private def buildReferentGraph() : ArcLabelledImmutableGraph = {
     LOG.info(String.format("Creating the referent graph with %s arcs",arcList.length.toString))
-    val g= GraphUtils.buildWeightedGraphFromTriples(arcList)
+    val g= GraphUtils.buildWeightedGraphFromTriples(arcList,nodeNumber)
     g
   }
 

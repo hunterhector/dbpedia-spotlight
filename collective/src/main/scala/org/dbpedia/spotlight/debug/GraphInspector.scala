@@ -20,15 +20,19 @@ object GraphInspector {
 
   LOG.info("Preparing graphs...")
   private val baseDir = graphConfig.get("org.dbpedia.spotlight.graph.dir")
-  private val occGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir")+graphConfig.get("org.dbpedia.spotlight.graph.occ.basename")
-  private val cooccGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.coocc.dir")+graphConfig.get("org.dbpedia.spotlight.graph.coocc.basename")
-  private val occTransposeGraphBaseName = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir") + graphConfig.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
-  private val sgBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.semantic.dir")+graphConfig.get("org.dbpedia.spotlight.graph.semantic.basename")
+  private val occDir = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir")
+  private val occGraphBasename = graphConfig.get("org.dbpedia.spotlight.graph.occ.basename")
+  private val cooccDir = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.coocc.dir")
+  private val cooccGraphBasename = graphConfig.get("org.dbpedia.spotlight.graph.coocc.basename")
+  private val occTransposeDir = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir")
+  private val occTransposeGraphBaseName = graphConfig.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
+  private val sgDir = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.semantic.dir")
+  private val sgBasename = graphConfig.get("org.dbpedia.spotlight.graph.semantic.basename")
 
-  private val owg = GraphUtils.loadAsArcLablelled(occGraphBasename,offline)
-  private val rowg = GraphUtils.loadAsArcLablelled(occTransposeGraphBaseName, offline)
-  private val cwg = GraphUtils.loadAsArcLablelled(cooccGraphBasename,offline)
-  private val sg = GraphUtils.loadAsArcLablelled(sgBasename,offline)
+  private val owg = GraphUtils.loadAsArcLablelled(occDir,occGraphBasename,offline)
+  private val rowg = GraphUtils.loadAsArcLablelled(occTransposeDir,occTransposeGraphBaseName, offline)
+  private val cwg = GraphUtils.loadAsArcLablelled(cooccDir,cooccGraphBasename,offline)
+  private val sg = GraphUtils.loadAsArcLablelled(sgDir,sgBasename,offline)
 
   LOG.info("Done")
 

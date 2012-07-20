@@ -93,6 +93,18 @@ object GraphUtils {
     aig
   }
 
+  def buildWeightedGraphFromTriples(triples:List[(Int,Int,Float)], numNodes:Int): ArcLabelledImmutableGraph = {
+    LOG.info("Creating a weighted graph")
+
+    val weightedArcArray = triples.map(tuple => new WeightedArc(tuple._1,tuple._2,tuple._3)).toArray
+
+    val aig: ArcLabelledImmutableGraph = new WeightedBVGraph(weightedArcArray, numNodes)
+
+    LOG.info(String.format("Done. Created a weighted Graph with %s nodes", aig.numNodes().toString))
+
+    aig
+  }
+
   def buildArcLabelledGraph(integerListFile: File): ArcLabelledImmutableGraph = {
     LOG.info("Creating an Arc labelled graph")
 
@@ -118,41 +130,50 @@ object GraphUtils {
     }
   }
 
-  def storeGraph(g: ImmutableGraph, baseName: String) {
-    LOG.info("Storing Graph to " + baseName)
-    BVGraph.store(g, baseName + ArcLabelledImmutableGraph.UNDERLYINGGRAPH_SUFFIX)
+  def storeGraph(g: ImmutableGraph, path:String, baseName: String) {
+    val fullPath = path + baseName
+
+    LOG.info("Storing Graph to " + fullPath)
+    BVGraph.store(g, fullPath + ArcLabelledImmutableGraph.UNDERLYINGGRAPH_SUFFIX)
     LOG.info("Graph generated.")
   }
 
-  def storeWeightedGraph(g: ArcLabelledImmutableGraph, baseName: String) {
-    LOG.info("Storing Weighted Graph to " + baseName)
+  def storeWeightedGraph(g: ArcLabelledImmutableGraph, path: String, baseName: String) {
+    val fullPath = path + baseName
+
+    LOG.info("Storing Weighted Graph to " + fullPath)
 
     LOG.info("Storing Labels")
-    BitStreamArcLabelledImmutableGraph.store(g, baseName, baseName + ArcLabelledImmutableGraph.UNDERLYINGGRAPH_SUFFIX)
+    BitStreamArcLabelledImmutableGraph.store(g, fullPath, baseName + ArcLabelledImmutableGraph.UNDERLYINGGRAPH_SUFFIX)
 
     LOG.info("Compressing Graph")
-    BVGraph.store(g, baseName + ArcLabelledImmutableGraph.UNDERLYINGGRAPH_SUFFIX)
+    BVGraph.store(g, fullPath + ArcLabelledImmutableGraph.UNDERLYINGGRAPH_SUFFIX)
 
     LOG.info("Graph generated.")
   }
 
-  def loadBVGraph(baseName: String) = {
-    LOG.info("Loading the Graph from " + baseName)
-    val g = BVGraph.load(baseName)
+  def loadBVGraph(path:String, baseName: String) = {
+    val fullPath = path + baseName
+
+    LOG.info("Loading the Graph from " + fullPath)
+    val g = BVGraph.load(fullPath)
     LOG.info("Done.")
     g
   }
 
-  def loadAsImmutable(baseName:String, offline: Boolean) = {
-    LOG.info("Loading the graph from "+baseName+" as ImmutableGraph")
-    val g = if (offline) ImmutableGraph.loadOffline(baseName) else ImmutableGraph.load(baseName)
+  def loadAsImmutable(path:String, baseName:String, offline: Boolean) = {
+    val fullPath = path + baseName
+
+    LOG.info("Loading the graph from "+fullPath+" as ImmutableGraph")
+    val g = if (offline) ImmutableGraph.loadOffline(fullPath) else ImmutableGraph.load(fullPath)
     LOG.info("Done")
     g
   }
 
-  def loadAsArcLablelled(baseName:String, offline: Boolean) = {
-    LOG.info("Loading the graph from "+baseName+" as ArcLablelledGraph")
-    val g = if (offline) ArcLabelledImmutableGraph.loadOffline(baseName) else ArcLabelledImmutableGraph.load(baseName)
+  def loadAsArcLablelled(path:String, basename:String, offline: Boolean) = {
+    val fullPath = path + basename
+    LOG.info("Loading the graph from "+fullPath+" as ArcLablelledGraph")
+    val g = if (offline) ArcLabelledImmutableGraph.loadOffline(fullPath) else ArcLabelledImmutableGraph.load(fullPath)
     LOG.info("Done")
     g
   }
@@ -175,7 +196,7 @@ object GraphUtils {
 //    println(revArchG.randomAccess())
 //
 //    storeWeightedGraph(revArchG,"/home/hector/Researches/nlp/DBpedia_Spotlight/dbpedia-spotlight/collective/graph/occs/occTransposeGraph")
-    val revArchRandomG = loadAsArcLablelled("/home/hector/Researches/nlp/DBpedia_Spotlight/dbpedia-spotlight/collective/graph/occs/occTransposeGraph",false)
+    val revArchRandomG = loadAsArcLablelled("/home/hector/Researches/nlp/DBpedia_Spotlight/dbpedia-spotlight/collective/graph/occs/","occTransposeGraph",false)
     println(revArchRandomG.randomAccess())
     println(revArchRandomG.numNodes())
 
