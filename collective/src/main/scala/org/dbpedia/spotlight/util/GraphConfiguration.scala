@@ -73,7 +73,7 @@ class GraphConfiguration(val configFile:File) {
      r
   }
 
-  private def indexValidate:Boolean = {
+  private def indexValidate  {
     LOG.info("Validating for indexing, to validate run, change 'org.dbpedia.spotlight.graph.validation' to 'run'.")
 
     val filesToCheck = List(
@@ -82,18 +82,15 @@ class GraphConfiguration(val configFile:File) {
      get("org.dbpedia.spotlight.graph.coocc.src")
     )
     filesToCheck.foreach( name =>{
-      try{
-        val test:File = new File(name)
-      }catch{
-        case fnfe : FileNotFoundException => LOG.error(String.format("A file pointed by the graph properties does not exist: %s",name))
-        return false
+      val test:File = new File(name)
+      if (!test.exists()){
+        throw new FileNotFoundException(String.format("A file pointed by the graph properties does not exist: %s",name))
       }
     }
     )
-    true
   }
 
-  private def runValidate:Boolean = {
+  private def runValidate {
     LOG.info("Validating for run, to validate indexing, change 'org.dbpedia.spotlight.graph.validation' to 'index'.")
 
     val filesToCheck = List(
@@ -103,17 +100,11 @@ class GraphConfiguration(val configFile:File) {
 
     )
     filesToCheck.foreach( name =>{
-      try{
         val test:File = new File(name)
-      }catch{
-        case fnfe : FileNotFoundException => LOG.error(String.format("A file pointed by the graph properties does not exist: %s",name))
-        return false
+      if (!test.exists()){
+        throw new FileNotFoundException(String.format("A file pointed by the graph properties does not exist: %s",name))
       }
     }
     )
-    true
   }
-
-
-
 }
