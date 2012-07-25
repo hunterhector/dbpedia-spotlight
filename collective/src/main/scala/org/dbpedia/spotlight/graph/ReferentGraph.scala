@@ -62,16 +62,16 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
       idxSet ++ list
     })
     LOG.debug("Number of candidates: "+allCandidateIndex.size)
-    new SemanticSubGraph(sg,allCandidateIndex)
+    new ArcLabelledSubGraph(sg,allCandidateIndex,1)
   }
 
   private def buildReferentArcList ():List[(Int,Int,Float)]  = {
     LOG.info("Getting semantic graph")
 
-    val tmpArcList = subSemanticGraph.getSemanticArcList()
+    val tmpArcList = subSemanticGraph.getBidirectionalArcList
 
     LOG.info("Combining surface forms and candidates into one graph list")
-    // Just need to know where surface forms start in graph, their score on them
+    // Just need to know where surface forms start in graph, scores on them
     // are irrelevant to results.
     // the start index of surfaceform nodes is the number of candidates nodes
     var sfSubIdx = candidateNumber
@@ -79,14 +79,15 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
       case (sfOcc,(occList,initialEvidence)) => {
         //connect surfaceform nodes to candidates nodes
         occList.foreach(occ => {
+           //see the index of this uri in root graph
            val idx = uri2IdxMap.getOrElse(occ.resource.uri,-1)
            if (idx == -1) LOG.warn("Resouce not found in uriMap: "+occ.resource.uri)
            else{
-             //get the candidate index in the referent graph
+             //get the candidate index in sub graph
              val subIdx = subSemanticGraph.fromSupergraphNode(idx)
              indexRecord += (subIdx -> (occ,sfOcc))    // use to retrive the final score
              val contextualScore = occ.contextualScore
-             // add a link from sf to candidate
+             // add a link from sf to candidate, link with zero contextual score will be omitted
              if (contextualScore > 0.0) {
                val tuple = (sfSubIdx,subIdx,contextualScore.toFloat)
                tmpArcList += tuple
@@ -115,7 +116,7 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
   def getResult (k: Int): Map[SurfaceFormOccurrence,List[DBpediaResourceOccurrence]] = {
     val rankVector = runPageRank(rg)
     val tmpResult = new mutable.HashMap[SurfaceFormOccurrence,ListBuffer[DBpediaResourceOccurrence]]()
-    //  only from 0 to candiddateNumber-1 are for candidates, the rest are for surfaceforms, irrelavent to result
+/*    //  only from 0 to candiddateNumber-1 are for candidates, the rest are for surfaceforms, irrelavent to result
     (0 to candidateNumber-1).foreach(idx => {
        val tuple = indexRecord(idx)
        val sfOcc = tuple._2
@@ -129,7 +130,21 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
          lsBuffer += resOcc
          tmpResult += (sfOcc -> lsBuffer)
        }
-    })
+    })*/
+
+    //indexRecord store indices of possible candidates to be disambiguated.
+    //so can be used to retrieve the result
+    indexRecord.foreach{case (idx,(resOcc,sfOcc)) =>{
+        val rank = rankVector(idx)
+        resOcc.setSimilarityScore(rank)
+        if (tmpResult.contains(sfOcc)){
+          tmpResult(sfOcc).append(resOcc)
+        }else{
+          val lsBuffer = new ListBuffer[DBpediaResourceOccurrence]
+          lsBuffer += resOcc
+          tmpResult += (sfOcc -> lsBuffer)
+        }
+    }}
 
     //well just transform listBuffer to list and sort the result, take best k, there might be better way to do this
     val result = tmpResult.foldLeft(Map[SurfaceFormOccurrence,List[DBpediaResourceOccurrence]]())( (finalMap,valuePair) =>{

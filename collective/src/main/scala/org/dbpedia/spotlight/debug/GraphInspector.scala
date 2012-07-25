@@ -1,7 +1,7 @@
 package org.dbpedia.spotlight.debug
 
 import java.io.File
-import org.dbpedia.spotlight.graph.SemanticSubGraph
+import org.dbpedia.spotlight.graph.ArcLabelledSubGraph
 import org.dbpedia.spotlight.util.{GraphConfiguration, GraphUtils}
 import org.apache.commons.logging.LogFactory
 import it.unimi.dsi.webgraph.labelling.ArcLabelledImmutableGraph
@@ -140,10 +140,10 @@ object GraphInspector {
     LOG.info("Finished!")
   }
 
-  def checkSubGraph(g: ArcLabelledImmutableGraph,set:Set[Int]) {
+  def checkSubGraph(g: ArcLabelledImmutableGraph,set:Set[Int],n:Int) {
 
-    val sg = new SemanticSubGraph(g,set)
-    val arcList =  sg.getSemanticArcList()
+    val sg = new ArcLabelledSubGraph(g,set,1)
+    val arcList =  sg.getBidirectionalArcList
     arcList.foreach(println)
   }
 
@@ -154,6 +154,6 @@ object GraphInspector {
 //    checkNode(owg,2)
 //    checkNode(owg,3823752)
     checkNode(sg,249)
-    checkSubGraph(sg,Set(0,1,2,3,187,249,3823752))
+    checkSubGraph(sg,Set(0,1,2,3,187,249,3823752),0)
   }
 }
