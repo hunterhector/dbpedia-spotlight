@@ -96,7 +96,7 @@ class GraphConfiguration(val configFile:File) {
     val filesToCheck = List(
      get("org.dbpedia.spotlight.graph.dir") ,
      get("org.dbpedia.spotlight.graph.dir")+get("org.dbpedia.spotlight.graph.mapFile") ,
-     get("org.dbpedia.spotlight.graph.dir") + get("org.dbpedia.spotlight.graph.semantic.dir")+get("org.dbpedia.spotlight.graph.semantic.basename")+"properties"
+     get("org.dbpedia.spotlight.graph.dir") + get("org.dbpedia.spotlight.graph.semantic.dir")+get("org.dbpedia.spotlight.graph.semantic.basename")+".properties"
 
     )
     filesToCheck.foreach( name =>{
