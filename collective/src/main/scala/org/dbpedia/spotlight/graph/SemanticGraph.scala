@@ -84,31 +84,35 @@ class SemanticGraph(occTranGraph: ArcLabelledImmutableGraph, cooccsGraph: ArcLab
 }
 
 object SemanticGraph{
-  val LOG = LogFactory.getLog(this.getClass)
-
-  val graphConfig = new GraphConfiguration("../conf/graph.properties")
-  private val offline = "true" == graphConfig.getOrElse("org.dbpedia.spotlight.graph.offline","false")
-
-  LOG.info("Preparing graphs...")
-  private val baseDir = graphConfig.get("org.dbpedia.spotlight.graph.dir")
-
-  private val cooccSubDir = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.coocc.dir")
-  private val cooccGraphBasename = graphConfig.get("org.dbpedia.spotlight.graph.coocc.basename")
-
-  private val occTransposeSubDir = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir")
-  private val occTransposeGraphBaseName = graphConfig.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
-
-  private val rowg = GraphUtils.loadAsArcLablelled(occTransposeSubDir,occTransposeGraphBaseName, offline)
-  private val cwg = GraphUtils.loadAsArcLablelled(cooccSubDir,cooccGraphBasename,offline)
-
-
-  //preparing output graph
-  private val sgSubDir = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.semantic.dir")
-  SimpleUtils.createDir(sgSubDir)
-  private val sgBasename = graphConfig.get("org.dbpedia.spotlight.graph.semantic.basename")
-  private val sgIntegerListFileName = sgSubDir+graphConfig.get("org.dbpedia.spotlight.graph.semantic.integerList")
-
    def main(args:Array[String]){
+     val LOG = LogFactory.getLog(this.getClass)
+
+     //val graphConfig = new GraphConfiguration("../conf/graph.properties")
+     val graphConfigFileName = args(0)
+     val graphConfig = new GraphConfiguration(graphConfigFileName)
+
+
+     val offline = "true" == graphConfig.getOrElse("org.dbpedia.spotlight.graph.offline","false")
+
+     LOG.info("Preparing graphs...")
+
+     val baseDir = graphConfig.get("org.dbpedia.spotlight.graph.dir")
+     val cooccSubDir = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.coocc.dir")
+     val cooccGraphBasename = graphConfig.get("org.dbpedia.spotlight.graph.coocc.basename")
+
+     val occTransposeSubDir = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir")
+     val occTransposeGraphBaseName = graphConfig.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
+
+     val rowg = GraphUtils.loadAsArcLablelled(occTransposeSubDir,occTransposeGraphBaseName, offline)
+     val cwg = GraphUtils.loadAsArcLablelled(cooccSubDir,cooccGraphBasename,offline)
+
+
+     //preparing output graph
+     val sgSubDir = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.semantic.dir")
+     SimpleUtils.createDir(sgSubDir)
+     val sgBasename = graphConfig.get("org.dbpedia.spotlight.graph.semantic.basename")
+     val sgIntegerListFileName = sgSubDir+graphConfig.get("org.dbpedia.spotlight.graph.semantic.integerList")
+
      val sg = new SemanticGraph(rowg,cwg)
 
      val sgFile = new File(sgIntegerListFileName)

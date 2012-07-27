@@ -13,8 +13,12 @@ import it.unimi.dsi.webgraph.labelling.ArcLabelledImmutableGraph
  * Time: 12:27 PM
  */
 
+/**
+ * This class is for debug purposes
+ */
 object GraphInspector {
   val LOG = LogFactory.getLog(this.getClass)
+
   val graphConfig = new GraphConfiguration("../conf/graph.properties")
   private val offline = "true" == graphConfig.getOrElse("org.dbpedia.spotlight.graph.offline","false")
 

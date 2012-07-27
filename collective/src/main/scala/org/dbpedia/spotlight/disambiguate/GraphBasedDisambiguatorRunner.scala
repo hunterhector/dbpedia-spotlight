@@ -38,11 +38,14 @@ object GraphBasedDisambiguatorRunner {
   val LOG = LogFactory.getLog(this.getClass)
 
   def main(args: Array[String]) {
+    if(args.length != 2) LOG.error("Please specify server config file and graph config file location.")
 
-    testGraphBasedDisambiguator("../conf/server.properties", "Default","../conf/graph.properties")
+    val serverConfigFileName = args(0)
+    val graphConfigFileName = args(1)
+    sampleRun(serverConfigFileName, "Default",graphConfigFileName)
   }
 
-  def testGraphBasedDisambiguator(configFileName: String, spotterName: String, graphConfigFileName:String) {
+  def sampleRun(configFileName: String, spotterName: String, graphConfigFileName:String) {
     val config = new SpotlightConfiguration(configFileName)
     val factory = new SpotlightFactory(config)
 

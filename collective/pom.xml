@@ -31,7 +31,17 @@
                     <id>makegraph</id>
                     <mainClass>org.dbpedia.spotlight.graph.GraphMaker</mainClass>
                     <args>
-                        <arg>../conf/graph.properties</arg>
+                        <arg>../conf/graph.es.properties</arg>
+                    </args>
+                    <jvmArgs>
+                        <jvmArg>-Xmx6G</jvmArg>
+                    </jvmArgs>
+                </launcher>
+                <launcher>
+                    <id>semantic</id>
+                    <mainClass>org.dbpedia.spotlight.graph.SemanticGraph</mainClass>
+                    <args>
+                        <arg>../conf/graph.es.properties</arg>
                     </args>
                     <jvmArgs>
                         <jvmArg>-Xmx6G</jvmArg>
@@ -40,15 +50,12 @@
                 <launcher>
                     <id>disambiguate</id>
                     <mainClass>org.dbpedia.spotlight.disambiguate.GraphBasedDisambiguatorRunner</mainClass>
+                    <args>
+                        <arg>../conf/server.properties</arg>
+                        <arg>../conf/graph.es.properties</arg>
+                    </args>
                     <jvmArgs>
                         <jvmArg>-Xmx7G</jvmArg>
-                    </jvmArgs>
-                </launcher>
-                <launcher>
-                    <id>semantic</id>
-                    <mainClass>org.dbpedia.spotlight.graph.SemanticGraph</mainClass>
-                    <jvmArgs>
-                        <jvmArg>-Xmx6G</jvmArg>
                     </jvmArgs>
                 </launcher>
                 <launcher>
