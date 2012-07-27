@@ -18,7 +18,7 @@ import scala.io.Source
 object GraphMaker{
   private val LOG = LogFactory.getLog(this.getClass)
 
-  def makeOccsGraph(uriMapFile:File, occsSrcFile:File, hostMap: Map[String,Int], baseDir:String, config:GraphConfiguration) = {
+  def makeOccsGraph(uriMapFile:File, occsSrcFile:File, hostMap: Map[String,Int], baseDir:String, config:GraphConfiguration, numberOfNodes:Int) = {
     //Generating for occurrences files
     val occSubDir = baseDir+config.get("org.dbpedia.spotlight.graph.occ.dir")
     SimpleUtils.createDir(occSubDir)
@@ -31,7 +31,7 @@ object GraphMaker{
     wog.parseOccsList(occsSrcFile,hostMap, occInterListFile)
 
     //build a weighted graph and store
-    val ocwg = GraphUtils.buildWeightedGraphFromFile(occInterListFile)
+    val ocwg = GraphUtils.buildWeightedGraphFromFile(occInterListFile,numberOfNodes)
     GraphUtils.storeWeightedGraph(ocwg,occSubDir,occBaseName)
 
     val occTransposeBaseName = config.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
@@ -42,7 +42,7 @@ object GraphMaker{
     GraphUtils.storeWeightedGraph(ocwgTrans,occSubDir,occTransposeBaseName)
   }
 
-  def makeCooccGraph(hostMap: Map[String,Int], baseDir:String, config:GraphConfiguration){
+  def makeCooccGraph(hostMap: Map[String,Int], baseDir:String, config:GraphConfiguration, numberOfNodes:Int){
     //Generating for co-occurrences files
     val cooccSubDir = baseDir+config.get("org.dbpedia.spotlight.graph.coocc.dir")
     SimpleUtils.createDir(cooccSubDir)
@@ -57,12 +57,12 @@ object GraphMaker{
 
     //build a weighted graph and store.
     //We should use the method that specify a node number, which make it possible to have nodes with no arcs
-    val cowg = GraphUtils.buildWeightedGraphFromFile(cooccInterListFile,config.getNodeNumber)
+    val cowg = GraphUtils.buildWeightedGraphFromFile(cooccInterListFile,numberOfNodes)
     GraphUtils.storeWeightedGraph(cowg,cooccSubDir,cooccBaseName)
   }
 
   //might be useless
-  def makeCommonInlinkGraph(hostMap: Map[String,Int], baseDir:String, config:GraphConfiguration){
+/*  def makeCommonInlinkGraph(hostMap: Map[String,Int], baseDir:String, config:GraphConfiguration){
     val inlinkSubDir = baseDir + config.get("org.dbpedia.spotlight.graph.commoninlink.dir")
     SimpleUtils.createDir(inlinkSubDir)
 
@@ -77,7 +77,7 @@ object GraphMaker{
     //build the graph and store with node number
     val cilg = GraphUtils.buildWeightedGraphFromFile(inlinkIntegerListFile,config.getNodeNumber)
     GraphUtils.storeWeightedGraph(cilg,inlinkSubDir,inlinkBaseName)
-  }
+  }*/
 
 
 
@@ -102,7 +102,7 @@ object GraphMaker{
     //Get the host map
     val hostMap = HostMap.load(uriMapFile)
 
-    makeOccsGraph(uriMapFile,occsSrcFile,hostMap,baseDir,config)
-    makeCooccGraph(hostMap,baseDir,config)
+    makeOccsGraph(uriMapFile,occsSrcFile,hostMap,baseDir,config,numberOfNodes)
+    makeCooccGraph(hostMap,baseDir,config,numberOfNodes)
   }
 }
