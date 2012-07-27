@@ -11,9 +11,11 @@ import net.sf.json.JSONObject
  */
 
 object SimpleUtils {
+
+  //TODO: This is bad because Regex may match, but simple pig dump data are not that well formed, it may run into problem, should use standard format like JSON
   def hadoopTuplesToMap(bagString:String):Map[String,Int] = {
     var targetMap = Map.empty[String,Int]
-    val pattern = """\((.*?),(.*?)\)""".r
+    val pattern = """\((.*?),(\d+)\)""".r
     for(m <- pattern.findAllIn(bagString).matchData) {
       // LOG.info(m.group(1)+"\t"+m.group(2))
       targetMap += (m.group(1) -> m.group(2).toInt)
