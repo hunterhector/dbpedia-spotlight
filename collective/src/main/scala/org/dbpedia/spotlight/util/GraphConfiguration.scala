@@ -73,11 +73,11 @@ class GraphConfiguration(val configFile:File) {
      r
   }
 
+  //validate index, only require occs.tsv and co-occs-count.tsv exists
   private def indexValidate  {
     LOG.info("Validating for indexing, to validate run, change 'org.dbpedia.spotlight.graph.validation' to 'run'.")
 
     val filesToCheck = List(
-     get("org.dbpedia.spotlight.graph.dir") ,
      get("org.dbpedia.spotlight.graph.occ.src") ,
      get("org.dbpedia.spotlight.graph.coocc.src")
     )
@@ -90,6 +90,7 @@ class GraphConfiguration(val configFile:File) {
     )
   }
 
+  //validate running environment, need at least the core semantic file exists
   private def runValidate {
     LOG.info("Validating for run, to validate indexing, change 'org.dbpedia.spotlight.graph.validation' to 'index'.")
 
