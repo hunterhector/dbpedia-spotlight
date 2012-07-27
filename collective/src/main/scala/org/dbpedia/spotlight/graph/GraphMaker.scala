@@ -95,7 +95,7 @@ object GraphMaker{
 
     //Generate the host map
     val numberOfNodes = HostMap.parseToHostMap(occsSrcFile,uriMapFile)
-    val outWriter = new PrintWriter(new File(config.get("org.dbpedia.spotlight.graph.dir")+"/nodenuber"))
+    val outWriter = new PrintWriter(new File(config.get("org.dbpedia.spotlight.graph.dir")+"/nodenumber"))
     outWriter.println(numberOfNodes)
     outWriter.close()
 

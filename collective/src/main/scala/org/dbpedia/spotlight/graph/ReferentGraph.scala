@@ -185,7 +185,7 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
     val deltaStop = new WeightedPageRank.NormDeltaStoppingCriterion(WeightedPageRank.DEFAULT_THRESHOLD)
     val iterStop = new WeightedPageRank.IterationNumberStoppingCriterion(WeightedPageRank.DEFAULT_MAX_ITER)
     val finalStop = WeightedPageRank.or(deltaStop, iterStop)
-    //TODO problem here: can't compile with this line in scala, but can successfully call in java
+    //TODO problem here: can't compile with these line in scala, but can successfully call in java
     //pr.stepUntil(finalStop)
 
     pr.rank*/
