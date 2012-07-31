@@ -55,41 +55,13 @@ import it.unimi.dsi.webgraph.{ImmutableGraph, Transform}
  * @author hectorliu
  */
 
-class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFileName: String) extends ParagraphDisambiguator {
+class GraphBasedDisambiguator(val candidateSearcher: CandidateSearcher, val contextSearcher:MergedOccurrencesContextSearcher, val graphConfigFileName: String) extends ParagraphDisambiguator {
 
-  val configuration = factory.configuration
   val graphConfig = new GraphConfiguration(graphConfigFileName)
 
   private val LOG = LogFactory.getLog(this.getClass)
 
   LOG.info("Initializing disambiguator object ...")
-
-  //similar intialization copied from TwoStepDisambiguator
-  val contextIndexDir = LuceneManager.pickDirectory(new File(configuration.getContextIndexDirectory))
-  val contextLuceneManager = new LuceneManager.CaseInsensitiveSurfaceForms(contextIndexDir)
-  // use this if all surface forms in the index are lower-cased
-  val cache = JCSTermCache.getInstance(contextLuceneManager, configuration.getMaxCacheSize);
-  contextLuceneManager.setContextSimilarity(new CachedInvCandFreqSimilarity(cache)) // set most successful Similarity
-  contextLuceneManager.setDBpediaResourceFactory(configuration.getDBpediaResourceFactory)
-  contextLuceneManager.setDefaultAnalyzer(configuration.getAnalyzer)
-  val contextSearcher: MergedOccurrencesContextSearcher = new MergedOccurrencesContextSearcher(contextLuceneManager)
-
-  var candidateSearcher: CandidateSearcher = null
-  //TODO move to factory
-  var candLuceneManager: LuceneManager = contextLuceneManager;
-  if (configuration.getCandidateIndexDirectory != configuration.getContextIndexDirectory) {
-    val candidateIndexDir = LuceneManager.pickDirectory(new File(configuration.getCandidateIndexDirectory))
-    //candLuceneManager = new LuceneManager.CaseSensitiveSurfaceForms(candidateIndexDir)
-    candLuceneManager = new LuceneManager(candidateIndexDir)
-    candLuceneManager.setDBpediaResourceFactory(configuration.getDBpediaResourceFactory)
-    candidateSearcher = new LuceneCandidateSearcher(candLuceneManager, true) // or we can provide different functionality for surface forms (e.g. n-gram search)
-    LOG.info("CandidateSearcher initialized from %s".format(candidateIndexDir))
-  } else {
-    candidateSearcher = contextSearcher match {
-      case cs: CandidateSearcher => cs
-      case _ => new LuceneCandidateSearcher(contextLuceneManager, false) // should never happen
-    }
-  }
 
   LOG.info("Loading graphs...")
   private val offline = "true" == graphConfig.getOrElse("org.dbpedia.spotlight.graph.offline","false")
@@ -128,7 +100,7 @@ class GraphBasedDisambiguator(val factory: SpotlightFactory, val graphConfigFile
 
     val mlt = new MoreLikeThis(contextSearcher.mReader)
     mlt.setFieldNames(Array(DBpediaResourceField.CONTEXT.toString))
-    mlt.setAnalyzer(contextLuceneManager.defaultAnalyzer)
+    mlt.setAnalyzer(contextSearcher.getLuceneManager.defaultAnalyzer)
 
     val inputStream = new ByteArrayInputStream(context.getBytes("UTF-8"));
     val query = mlt.like(inputStream)

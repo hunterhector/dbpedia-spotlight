@@ -52,9 +52,8 @@ object GraphBasedDisambiguatorRunner {
     val spotterPolicy = SpotterPolicy.valueOf(spotterName)
     val spotter = factory.spotter(spotterPolicy)
 
-    //TODO should be included in factory
 
-    val disambiguator = new ParagraphDisambiguatorJ(new GraphBasedDisambiguator(factory,graphConfigFileName))
+    val disambiguator = new ParagraphDisambiguatorJ(new GraphBasedDisambiguator(factory.candidateSearcher,factory.contextSearcher,graphConfigFileName))
     LOG.info("Initialization done.")
 
     val k = 5
