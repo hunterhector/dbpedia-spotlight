@@ -23,15 +23,10 @@ object SimpleUtils {
     targetMap
   }
 
-  def mapFromJSONFile(srcFile:File):Map[String,Int] ={
-    val srcString = io.Source.fromFile(srcFile).mkString
-    mapFromJSONString(srcString)
-  }
-
-  //TODO: method to read JSON as Map
-  def mapFromJSONString(str:String):Map[String,Int] ={
-    val jsonObj = JSONObject.fromObject(str)
-    null
+  def isPigPartFile(f:File) = {
+    val name = f.getName
+    val pattern = """^part-r-\d+$""".r
+    pattern.findFirstIn(name).nonEmpty
   }
 
   def createDir(dirName:String){
