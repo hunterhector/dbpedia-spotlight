@@ -8,6 +8,7 @@ import org.dbpedia.spotlight.util.{GraphUtils, GraphConfiguration, SimpleUtils}
 import org.json.JSONObject
 import sun.util.calendar.LocalGregorianCalendar
 import org.json
+import com.officedepot.cdap2.collection.CompactHashMap
 
 /**
  * Created with IntelliJ IDEA.
@@ -27,7 +28,7 @@ import org.json
 class WikipediaCooccurrencesGraph {
   val LOG = LogFactory.getLog(this.getClass)
 
-  def parsePigStorageFile(cooccsFile:File,hostMap:Map[String,Int],ilfoStream:PrintStream){
+  def parsePigStorageFile(cooccsFile:File,hostMap:CompactHashMap[String,Int],ilfoStream:PrintStream){
     var count = 0
     Source.fromFile(cooccsFile).getLines().filterNot(line => line.trim() == "").foreach(
       line => {
@@ -63,7 +64,7 @@ class WikipediaCooccurrencesGraph {
       })
   }
 
-  def parseJSONStorageFile(cooccsFile:File,hostMap:Map[String,Int],ilfoStream:PrintStream) {
+  def parseJSONStorageFile(cooccsFile:File,hostMap:CompactHashMap[String,Int],ilfoStream:PrintStream) {
     var count = 0
 
     val fileList =
@@ -115,7 +116,7 @@ class WikipediaCooccurrencesGraph {
     )))
   }
 
-  def parseCooccsList(cooccsFile:File , hostMap:Map[String,Int] , integerListFile:File) {
+  def parseCooccsList(cooccsFile:File , hostMap:CompactHashMap[String,Int] , integerListFile:File) {
     LOG.info("Parsing Cooccurrences into Integer List")
 
     val ilfo: OutputStream = new FileOutputStream(integerListFile)

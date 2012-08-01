@@ -5,6 +5,8 @@ import es.yrbcn.graph.weighted.WeightedBVGraph
 import org.dbpedia.spotlight.util.{SimpleUtils, GraphConfiguration, GraphUtils}
 import org.apache.commons.logging.LogFactory
 import scala.io.Source
+import com.officedepot.cdap2.collection.CompactHashMap
+
 /**
  * Created with IntelliJ IDEA.
  * User: hector
@@ -18,7 +20,7 @@ import scala.io.Source
 object GraphMaker{
   private val LOG = LogFactory.getLog(this.getClass)
 
-  def makeOccsGraph(uriMapFile:File, occsSrcFile:File, hostMap: Map[String,Int], baseDir:String, config:GraphConfiguration, numberOfNodes:Int) = {
+  def makeOccsGraph(uriMapFile:File, occsSrcFile:File, hostMap: CompactHashMap[String,Int], baseDir:String, config:GraphConfiguration, numberOfNodes:Int) = {
     //Generating for occurrences files
     val occSubDir = baseDir+config.get("org.dbpedia.spotlight.graph.occ.dir")
     SimpleUtils.createDir(occSubDir)
@@ -42,7 +44,7 @@ object GraphMaker{
     GraphUtils.storeWeightedGraph(ocwgTrans,occSubDir,occTransposeBaseName)
   }
 
-  def makeCooccGraph(hostMap: Map[String,Int], baseDir:String, config:GraphConfiguration, numberOfNodes:Int){
+  def makeCooccGraph(hostMap: CompactHashMap[String,Int], baseDir:String, config:GraphConfiguration, numberOfNodes:Int){
     //Generating for co-occurrences files
     val cooccSubDir = baseDir+config.get("org.dbpedia.spotlight.graph.coocc.dir")
     SimpleUtils.createDir(cooccSubDir)

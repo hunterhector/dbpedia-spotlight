@@ -5,6 +5,7 @@ import io.Source
 import org.dbpedia.spotlight.model.DBpediaResource
 import org.apache.commons.logging.LogFactory
 import collection.mutable
+import com.officedepot.cdap2.collection.CompactHashMap
 
 
 /**
@@ -21,7 +22,7 @@ import collection.mutable
 class WikipediaOccurrenceGraph {
   val LOG = LogFactory.getLog(this.getClass)
 
-  def parseOccsList(occsFile: File,  hostMap:Map[String,Int], integerListFile: File) = {
+  def parseOccsList(occsFile: File,  hostMap:CompactHashMap[String,Int], integerListFile: File) = {
     LOG.info("Parsing occurrences into Integer List")
 
     val arcMap = new mutable.HashMap[(Int,Int),Double]
