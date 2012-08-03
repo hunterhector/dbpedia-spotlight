@@ -65,7 +65,7 @@ object HostMap {
           }
           if (uriSet.size % 500000 == 0) LOG.info(String.format("Map %s valid URIs", indexCount.toString))
         } else {
-          LOG.error("Invailid line in file at \n -> \t" + line)
+          LOG.warn("Invailid line in file at \n -> \t" + line)
         }
       })
 
@@ -94,7 +94,7 @@ object HostMap {
 
           hostMap += (uri -> index)
         }else{
-          LOG.error("Invalid string in occsMapFile, lines should be two fields seperated by tab: \n\t-->\t"+line)
+          LOG.warn("Invalid string in occsMapFile, lines should be two fields seperated by tab: \n\t-->\t"+line)
         }
       }
     )
@@ -119,7 +119,7 @@ object HostMap {
 
           hostMap += (index -> uri)
         }else{
-          LOG.error("Invalid string in occsMapFile, lines should be two fields seperated by tab: \n\t-->\t"+line)
+          LOG.warn("Invalid string in occsMapFile, lines should be two fields seperated by tab: \n\t-->\t"+line)
         }
       }
     )

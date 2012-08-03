@@ -184,7 +184,7 @@ class GraphBasedDisambiguator(val candidateSearcher: CandidateSearcher, val cont
       acc + (resource.uri -> (resource,score))
     })
 
-    LOG.info("Building compatible edges.")
+    LOG.info("Building compatible edges and collecting prior importances.")
     //build up a map for compatible edges
     val scoredSf2Cands = sf2CandidatesMap.foldLeft(Map[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)]()) (( edgesMap, sftoCands) => {
       val sfOcc = sftoCands._1
@@ -211,34 +211,26 @@ class GraphBasedDisambiguator(val candidateSearcher: CandidateSearcher, val cont
     if (cf > 0){
       icf  = math.log(contextSearcher.getNumberOfResources/cf)
     }else{
-      LOG.warn("Can't find context frequency for surface form, set icf to 0"+sf.toString)
+      LOG.warn(String.format("Can't find context frequency for surface form [%s], set icf to 0",sf.toString))
     }
 
-/*  //TODO: Frequency search give 0
-    val tf = contextSearcher.getFrequency(sf)
-    var loggedTf = 0.0
-    if (tf > 0){
-      loggedTf = math.log(tf)
-    }else{
-      LOG.warn("Can't find frequencey for surface form, set tf to 0"+sf.toString)
-    }*/
     LOG.debug(String.format("For the surface form: %s, context frequency is %s",sf.toString,icf.toString))
     val sfImportance = icf
     sfImportance
   }
 
   def getCandidates(sf: SurfaceForm): Set[DBpediaResource] = {
-    var candidates = new java.util.HashSet[DBpediaResource]().asScala.toSet
+    var candidates = new java.util.HashSet[DBpediaResource]().asScala
 
     try {
-      candidates = candidateSearcher.getCandidates(sf).asScala.toSet
+      candidates = candidateSearcher.getCandidates(sf).asScala
     } catch {
       case se:
         SearchException => LOG.debug(se)
       case infe:
         ItemNotFoundException => LOG.debug(infe)
     }
-    candidates
+    candidates.toSet
   }
 
 }

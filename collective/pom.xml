@@ -31,7 +31,7 @@
                     <id>makegraph</id>
                     <mainClass>org.dbpedia.spotlight.graph.GraphMaker</mainClass>
                     <args>
-                        <arg>../conf/graph.es.properties</arg>
+                        <arg>../conf/graph.properties</arg>
                     </args>
                     <jvmArgs>
                         <jvmArg>-Xmx6G</jvmArg>
@@ -41,7 +41,7 @@
                     <id>semantic</id>
                     <mainClass>org.dbpedia.spotlight.graph.SemanticGraph</mainClass>
                     <args>
-                        <arg>../conf/graph.es.properties</arg>
+                        <arg>../conf/graph.properties</arg>
                     </args>
                     <jvmArgs>
                         <jvmArg>-Xmx6G</jvmArg>
@@ -52,7 +52,7 @@
                     <mainClass>org.dbpedia.spotlight.disambiguate.GraphBasedDisambiguatorRunner</mainClass>
                     <args>
                         <arg>../conf/server.properties</arg>
-                        <arg>../conf/graph.es.properties</arg>
+                        <arg>../conf/graph-runonly-merged.properties</arg>
                     </args>
                     <jvmArgs>
                         <jvmArg>-Xmx7G</jvmArg>
