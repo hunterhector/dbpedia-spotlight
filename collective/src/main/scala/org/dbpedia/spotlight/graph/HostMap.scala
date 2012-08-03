@@ -4,6 +4,7 @@ import org.apache.commons.logging.LogFactory
 import java.io.{PrintStream, FileOutputStream, File}
 import collection.mutable.{HashMap,HashSet}
 import io.Source
+import com.officedepot.cdap2.collection.{CompactHashMap, CompactHashSet}
 
 /**
  * Created with IntelliJ IDEA.
@@ -22,18 +23,8 @@ object HostMap {
    * @return An Integer counting the total number of URIs collected
    */
   def parseToHostMap(occsFile: File, mapFile: File): Int = {
-/*    val freeMemGB : Double = Runtime.getRuntime.freeMemory / 1073741824.0
-    val maxMemGB : Double = Runtime.getRuntime.maxMemory / 1073741824.0
-    val totalMemGB :Double =  Runtime.getRuntime.totalMemory / 1073741824.0
-    LOG.info("Available memory: "+freeMemGB+"GB")
-    LOG.info("Max memory: "+ maxMemGB +"GB")
-    LOG.info("Total memory (bytes): " + totalMemGB + "GB")
-
-    if (maxMemGB < 3)
-      LOG.warn("You probably need to provide more memory to JVM to finish the task")*/
-
     LOG.info("Parsing the occs file to Map")
-    val uriSet = new HashSet[String]()       // use a set to control duplicat URIs and to count the URI number
+    val uriSet = CompactHashSet[String]()       // use a set to control duplicat URIs and to count the URI number
 
     val mfo = new FileOutputStream(mapFile)
     val mfoStream = new PrintStream(mfo, true)
@@ -82,9 +73,9 @@ object HostMap {
    * @param mapFile the map file created by parseToHostMap
    * @return a scala Map: host map from uri to graph index
    */
-  def load (mapFile:File): Map[String,Int] = {
+  def load (mapFile:File): CompactHashMap[String,Int] = {
     LOG.info("Reading the host map.")
-    val hostMap = new HashMap[String,Int]
+    val hostMap = new CompactHashMap[String,Int]
     Source.fromFile(mapFile).getLines().filterNot(line => line.trim() == "").foreach(
       line =>{
         val fields = line.split("\\t")
@@ -99,7 +90,7 @@ object HostMap {
       }
     )
     LOG.info("Done")
-    hostMap.toMap
+    hostMap
   }
 
   /**
@@ -107,9 +98,9 @@ object HostMap {
    * @param mapFile the map file created by parseToHostMap
    * @return a scala Map: host map from graph index to uri
    */
-  def loadReverse (mapFile:File): Map[Int,String] = {
+  def loadReverse (mapFile:File): CompactHashMap[Int,String] = {
     LOG.info("Reading the host map reversely.")
-    val hostMap = new HashMap[Int,String]
+    val hostMap = new CompactHashMap[Int,String]
     Source.fromFile(mapFile).getLines().filterNot(line => line.trim() == "").foreach(
       line =>{
         val fields = line.split("\\t")
@@ -124,6 +115,6 @@ object HostMap {
       }
     )
     LOG.info("Done")
-    hostMap.toMap
+    hostMap
   }
 }

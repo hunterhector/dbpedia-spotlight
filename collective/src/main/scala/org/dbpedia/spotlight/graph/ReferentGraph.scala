@@ -11,6 +11,7 @@ import collection.mutable.ListBuffer
 import it.unimi.dsi.fastutil.doubles.{DoubleArrayList, DoubleList}
 import org.dbpedia.spotlight.model.Factory.SurfaceFormOccurrence
 import org.dbpedia.spotlight.model.SurfaceFormOccurrence
+import com.officedepot.cdap2.collection.CompactHashMap
 
 /**
  * Created with IntelliJ IDEA.
@@ -28,7 +29,7 @@ import org.dbpedia.spotlight.model.SurfaceFormOccurrence
  * @author Hectorliu
  * @param scoredSf2CandsMap
  */
-class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: Map[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)], uri2IdxMap: Map[String,Int], teleportationConstant:Float) {
+class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: CompactHashMap[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)], uri2IdxMap: CompactHashMap[String,Int], teleportationConstant:Float) {
   private val LOG = LogFactory.getLog(this.getClass)
 
   LOG.info("Initializing Graph Object.")

@@ -31,7 +31,7 @@ import org.dbpedia.spotlight.graph.{HostMap, ReferentGraph}
 import org.apache.lucene.index.Term
 import org.dbpedia.spotlight.lucene.LuceneManager.DBpediaResourceField
 import org.apache.lucene.search.similar.MoreLikeThis
-import com.officedepot.cdap2.collection.CompactHashSet
+import com.officedepot.cdap2.collection.{CompactHashMap, CompactHashSet}
 import org.apache.lucene.search.ScoreDoc
 import it.unimi.dsi.webgraph.labelling.ArcLabelledImmutableGraph
 import org.dbpedia.spotlight.util.{GraphUtils, GraphConfiguration}
@@ -154,17 +154,17 @@ class GraphBasedDisambiguator(val candidateSearcher: CandidateSearcher, val cont
     rGraph.getResult(k)
   }
 
-  def getContextScore(paragraph: Paragraph) : Map[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)]  = {
+  def getContextScore(paragraph: Paragraph) : CompactHashMap[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)]  = {
     LOG.info("Getting initial context scores.")
     val allCandidates = CompactHashSet[DBpediaResource]
 
     val sf2CandidatesMap = paragraph.occurrences.foldLeft(
-      Map[SurfaceFormOccurrence, List[DBpediaResource]]()
+      CompactHashMap[SurfaceFormOccurrence, List[DBpediaResource]]()
     )(
       (sf2Cands, sfOcc) => {
         val cands = getCandidates(sfOcc.surfaceForm).toList
         cands.foreach(r => allCandidates.add(r))
-        sf2Cands + (sfOcc -> cands)
+        sf2Cands += (sfOcc -> cands)
       })
 
     var hits : Array[ScoreDoc] = null
@@ -186,7 +186,7 @@ class GraphBasedDisambiguator(val candidateSearcher: CandidateSearcher, val cont
 
     LOG.info("Building compatible edges and collecting prior importances.")
     //build up a map for compatible edges
-    val scoredSf2Cands = sf2CandidatesMap.foldLeft(Map[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)]()) (( edgesMap, sftoCands) => {
+    val scoredSf2Cands = sf2CandidatesMap.foldLeft(CompactHashMap[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)]()) (( edgesMap, sftoCands) => {
       val sfOcc = sftoCands._1
       val cands = sftoCands._2
       val candOccs = cands.map( shallowResource => {
@@ -198,7 +198,7 @@ class GraphBasedDisambiguator(val candidateSearcher: CandidateSearcher, val cont
         }
         Factory.DBpediaResourceOccurrence.from(sfOcc,resource, supportConfidence)
       })
-      edgesMap + (sfOcc -> (candOccs,getSurfaceImportance(sfOcc.surfaceForm)))
+      edgesMap += (sfOcc -> (candOccs,getSurfaceImportance(sfOcc.surfaceForm)))
     })
     scoredSf2Cands
   }
