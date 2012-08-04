@@ -32,7 +32,7 @@ import com.officedepot.cdap2.collection.CompactHashMap
 class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: CompactHashMap[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)], uri2IdxMap: CompactHashMap[String,Int], teleportationConstant:Float) {
   private val LOG = LogFactory.getLog(this.getClass)
 
-  LOG.info("Initializing Graph Object.")
+  LOG.debug("Initializing Graph Object.")
 
   private val s2c = scoredSf2CandsMap
   private val sg = semanticGraph
@@ -55,7 +55,7 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
   val rg = buildReferentGraph() //For index less than candidateNumber, referentGraph and subCooccGraph have index pointing to the same thing
 
   private def getCandiddateSubGraph = {
-    LOG.info("Getting a subgraph of all candiddates.")
+    LOG.debug("Getting a subgraph of all candiddates.")
     val allCandidateIndex = s2c.foldLeft(Set[Int]())((idxSet,tuple)=> {
       val sf = tuple._1
       val occList = tuple._2._1
@@ -67,11 +67,11 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
   }
 
   private def buildReferentArcList ():List[(Int,Int,Float)]  = {
-    LOG.info("Getting the core entities graph")
+    LOG.debug("Getting the core entities graph")
 
     val tmpArcList = subSemanticGraph.getBidirectionalArcList
 
-    LOG.info("Connecting surface forms to the core entities graph")
+    LOG.debug("Connecting surface forms to the core entities graph")
     // Just need to know where surface forms start in graph, scores on them
     // are irrelevant to results.
     // the start index of surfaceform nodes is the number of core graph nodes
@@ -82,7 +82,7 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
         occList.foreach(occ => {
            //see the index of this uri in root graph
            val idx = uri2IdxMap.getOrElse(occ.resource.uri,-1)
-           if (idx == -1) LOG.warn("Resouce not found in uriMap: "+occ.resource.uri)
+           if (idx == -1) LOG.debug("Resouce not found in uriMap: "+occ.resource.uri)
            else{
              //get the candidate index in sub graph
              val subIdx = subSemanticGraph.fromSupergraphNode(idx)
@@ -111,12 +111,12 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
       }
       case _ => LOG.error("Incorrect tuple in uriMap") //well, this should not happen
     }
-    LOG.info(String.format("Referent Graph: %s nodes in total; %s core graph nodes ; %s surfaceform.",sfSubIdx.toString,coreGraphNodeNumber.toString,sfNumber.toString))
+    LOG.debug(String.format("Referent Graph: %s nodes in total; %s core graph nodes ; %s surfaceform.",sfSubIdx.toString,coreGraphNodeNumber.toString,sfNumber.toString))
     tmpArcList.toList
   }
 
   private def buildReferentGraph() : ArcLabelledImmutableGraph = {
-    LOG.info(String.format("Creating the referent graph with %s arcs",arcList.length.toString))
+    LOG.debug(String.format("Creating the referent graph with %s arcs",arcList.length.toString))
     val g= GraphUtils.buildWeightedGraphFromTriples(arcList,nodeNumber)
     g
   }
@@ -170,7 +170,7 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
 
   private def runPageRank(g: ArcLabelledImmutableGraph) : Array[Double] = {
     //TODO: make parameters configurable
-    LOG.info("Running page ranks...")
+    LOG.debug("Running page ranks...")
     //accoding to Han, they use weakly preferential
     WeightedPageRankWrapper.run(g,WeightedPageRank.DEFAULT_ALPHA,false,WeightedPageRank.DEFAULT_THRESHOLD,10,makeStochastic(initialVector),preferenceVector)
 

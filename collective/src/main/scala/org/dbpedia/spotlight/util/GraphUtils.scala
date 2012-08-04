@@ -27,7 +27,7 @@ object GraphUtils {
   def buildGraph(integerListFile: File, numNodes: Int): ImmutableGraph = {
     val graph = new ArrayListMutableGraph()
     graph.addNodes(numNodes)
-    LOG.info(String.format("Creating a graph with %s number of nodes", numNodes.toString))
+    LOG.debug(String.format("Creating a graph with %s number of nodes", numNodes.toString))
 
     Source.fromFile(integerListFile).getLines().filterNot(line => line.trim() == "").foreach(
       line => {
@@ -52,7 +52,7 @@ object GraphUtils {
       }
     )
 
-    LOG.info("Done.")
+    LOG.debug("Done.")
     graph.immutableView()
 
   }
@@ -82,25 +82,25 @@ object GraphUtils {
   }
 
   def buildWeightedGraphFromTriples(triples:List[(Int,Int,Float)]): ArcLabelledImmutableGraph = {
-    LOG.info("Creating a weighted graph")
+    LOG.debug("Creating a weighted graph")
 
     val weightedArcArray = triples.map(tuple => new WeightedArc(tuple._1,tuple._2,tuple._3)).toArray
 
     val aig: ArcLabelledImmutableGraph = new WeightedBVGraph(weightedArcArray)
 
-    LOG.info(String.format("Done. Created a weighted Graph with %s nodes", aig.numNodes().toString))
+    LOG.debug(String.format("Done. Created a weighted Graph with %s nodes", aig.numNodes().toString))
 
     aig
   }
 
   def buildWeightedGraphFromTriples(triples:List[(Int,Int,Float)], numNodes:Int): ArcLabelledImmutableGraph = {
-    LOG.info("Creating a weighted graph")
+    LOG.debug("Creating a weighted graph")
 
     val weightedArcArray = triples.map(tuple => new WeightedArc(tuple._1,tuple._2,tuple._3)).toArray
 
     val aig: ArcLabelledImmutableGraph = new WeightedBVGraph(weightedArcArray, numNodes)
 
-    LOG.info(String.format("Done. Created a weighted Graph with %s nodes", aig.numNodes().toString))
+    LOG.debug(String.format("Done. Created a weighted Graph with %s nodes", aig.numNodes().toString))
 
     aig
   }
@@ -118,7 +118,7 @@ object GraphUtils {
   }
 
   def dumpLabelledGraph(g: ArcLabelledImmutableGraph) {
-    LOG.info("Dumping the labelled graph for debug purposes")
+    LOG.debug("Dumping the labelled graph for debug purposes")
 
     val nodeIterator: ArcLabelledNodeIterator = g.nodeIterator
 

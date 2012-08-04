@@ -155,7 +155,7 @@ class GraphBasedDisambiguator(val candidateSearcher: CandidateSearcher, val cont
   }
 
   def getContextScore(paragraph: Paragraph) : CompactHashMap[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)]  = {
-    LOG.info("Getting initial context scores.")
+    LOG.debug("Getting initial context scores.")
     val allCandidates = CompactHashSet[DBpediaResource]
 
     val sf2CandidatesMap = paragraph.occurrences.foldLeft(
@@ -184,7 +184,7 @@ class GraphBasedDisambiguator(val candidateSearcher: CandidateSearcher, val cont
       acc + (resource.uri -> (resource,score))
     })
 
-    LOG.info("Building compatible edges and collecting prior importances.")
+    LOG.debug("Building compatible edges and collecting prior importances.")
     //build up a map for compatible edges
     val scoredSf2Cands = sf2CandidatesMap.foldLeft(CompactHashMap[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)]()) (( edgesMap, sftoCands) => {
       val sfOcc = sftoCands._1
@@ -211,7 +211,7 @@ class GraphBasedDisambiguator(val candidateSearcher: CandidateSearcher, val cont
     if (cf > 0){
       icf  = math.log(contextSearcher.getNumberOfResources/cf)
     }else{
-      LOG.warn(String.format("Can't find context frequency for surface form [%s], set icf to 0",sf.toString))
+      LOG.debug(String.format("Can't find context frequency for surface form [%s], set icf to 0",sf.toString))
     }
 
     LOG.debug(String.format("For the surface form: %s, context frequency is %s",sf.toString,icf.toString))

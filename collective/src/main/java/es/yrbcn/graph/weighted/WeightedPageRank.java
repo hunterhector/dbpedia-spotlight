@@ -296,7 +296,7 @@ public abstract class WeightedPageRank {
 			c = ( t - normL1 ) - y;
 			normL1 = t;
 		}
-		System.err.println( "NORM is " + normL1 );
+		//System.err.println( "NORM is " + normL1 );
 		return ( i == -1 && Math.abs( normL1 - 1.0 ) <= STOCHASTIC_TOLERANCE );
 	}
 	

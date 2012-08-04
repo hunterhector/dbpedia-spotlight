@@ -88,7 +88,7 @@ import com.martiansoftware.jsap.UnflaggedOption;
 
 public class WeightedPageRankPowerMethod extends WeightedPageRank {
 	private final static Logger LOGGER = it.unimi.dsi.Util.getLogger( WeightedPageRankPowerMethod.class );
-	
+
 	/** The rank vector after the last iteration (only meaningful after at least one step). */
 	public double[] previousRank = null;
 	/** A progress logger. */
