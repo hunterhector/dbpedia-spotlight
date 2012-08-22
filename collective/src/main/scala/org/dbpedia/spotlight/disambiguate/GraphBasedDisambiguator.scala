@@ -45,13 +45,11 @@ import it.unimi.dsi.webgraph.{ImmutableGraph, Transform}
  */
 
 /**
- * This class implements ParagraphDisambiguator. A graph relation graph
- * will be constructed to leverage the overall disambiguation decisions.
+ * This class implements ParagraphDisambiguator. A graph will be constructed to leverage the overall disambiguation
+ * decisions in the hope to improve the overall disambiguation performance
  *
- * Disambiguators implemented in the collective module can only accept
- * paragraphs as parameters. One occurrence cannot be disambiguated
- * collectively
- *
+ * Disambiguators implemented in the collective module can be operated on paragraphs. One occurrence cannot be
+ * disambiguated collectively. So when doing evaluation, please use one that evaluate paragraph.
  * @author hectorliu
  */
 
@@ -70,19 +68,11 @@ class GraphBasedDisambiguator(val candidateSearcher: CandidateSearcher, val cont
 
   LOG.info("Preparing graphs...")
   private val baseDir = graphConfig.get("org.dbpedia.spotlight.graph.dir")
-//  private val occGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir")+graphConfig.get("org.dbpedia.spotlight.graph.occ.basename")
-//  private val cooccGraphBasename = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.coocc.dir")+graphConfig.get("org.dbpedia.spotlight.graph.coocc.basename")
-//  private val occTransposeGraphBaseName = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.occ.dir") + graphConfig.get("org.dbpedia.spotlight.graph.transpose.occ.basename")
   private val sgSubDir = baseDir+graphConfig.get("org.dbpedia.spotlight.graph.semantic.dir")
   private val sgBasename = graphConfig.get("org.dbpedia.spotlight.graph.semantic.basename")
 
-//  private val owg = GraphUtils.loadAsArcLablelled(occGraphBasename,offline)
-//  private val rowg = GraphUtils.loadAsArcLablelled(occTransposeGraphBaseName, offline)
-//  private val cwg = GraphUtils.loadAsArcLablelled(cooccGraphBasename,offline)
   private val sg = GraphUtils.loadAsArcLablelled(sgSubDir,sgBasename,offline)
 
-  LOG.info("Loading other parameters...")
-  private val teleportationConstant = graphConfig.getOrElse("org.dbpedia.spotlight.graph.pagerank.teleportation","0.1").toFloat
   /**
    * Every disambiguator has a name that describes its settings (used in evaluation to compare results)
    * @return a short description of the Disambiguator
@@ -149,12 +139,18 @@ class GraphBasedDisambiguator(val candidateSearcher: CandidateSearcher, val cont
 
     val scoredSf2Cands = getContextScore(paragraph)
 
-    val rGraph = new ReferentGraph(sg, scoredSf2Cands, uri2IdxMap, teleportationConstant)
+    val rGraph = new ReferentGraph(sg, scoredSf2Cands, uri2IdxMap, graphConfig)
 
     rGraph.getResult(k)
   }
 
-  def getContextScore(paragraph: Paragraph) : CompactHashMap[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)]  = {
+  /**
+   * Get the initial context score of each possible candidates
+   *
+   * @param paragraph The Paragraph to be disambiguated
+   * @return A map that each surface form occurrence is linked with a list of possible DBpediaResourceOccurrence with context score associated
+   */
+  private def getContextScore(paragraph: Paragraph) : CompactHashMap[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)]  = {
     LOG.debug("Getting initial context scores.")
     val allCandidates = CompactHashSet[DBpediaResource]
 
@@ -203,9 +199,15 @@ class GraphBasedDisambiguator(val candidateSearcher: CandidateSearcher, val cont
     scoredSf2Cands
   }
 
-  //could be represented by TF.ICF, TF.IDF or Normalized ones
-  //we implement TF.ICF here, because it is more likely to capture the importance of a surface form
+  /**
+   * Find the initial importance for a surface form.
+   *
+   * @param sf the surface form to be examined
+   * @return
+   */
   def getSurfaceImportance(sf: SurfaceForm): Double = {
+    //TODO currently only use ICF, could use the prior importance as the surfaceform evidence
+
     val cf = contextSearcher.getContextFrequency(sf)
     var icf = 0.0
     if (cf > 0){
@@ -219,6 +221,11 @@ class GraphBasedDisambiguator(val candidateSearcher: CandidateSearcher, val cont
     sfImportance
   }
 
+  /**
+   * Return possible candidates for one surface form
+   * @param sf the ambiguous surface form to find candidates
+   * @return Set of candidates that are possible underlying candidates
+   */
   def getCandidates(sf: SurfaceForm): Set[DBpediaResource] = {
     var candidates = new java.util.HashSet[DBpediaResource]().asScala
 

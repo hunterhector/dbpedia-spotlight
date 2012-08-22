@@ -23,14 +23,27 @@ import com.officedepot.cdap2.collection.CompactHashMap
 
 /**
  * Create a Integer list to help build a co-occurrence graph (use GraphUtils$ to build)
- * This class will use the Ocurrence-Integer map created by WikipediaOccurrenceGraph for consistence
+ * This class will use the Uri-Integer map (Host Map) created by WikipediaOccurrenceGraph so that it make sure
+ * the same index in both graph will point to the same url.
+ *
+ * It could parse both JSON files or PigStorage files.
+ *
+ * You can run this class independently. But the generation of this graph has already been included in GraphMaker.
+ * So if you have run that class successfully, you don't have to do so.
 */
 class WikipediaCooccurrencesGraph {
   val LOG = LogFactory.getLog(this.getClass)
 
-  def parsePigStorageFile(cooccsFile:File,hostMap:CompactHashMap[String,Int],ilfoStream:PrintStream){
+  /**
+   * Parse the cooccsFile generated using PigStorage
+   * @param fileList The list of coocurrences file stored using PigStorage
+   * @param hostMap The hostMap from uri to index
+   * @param ilfoStream Integer List file output stream
+   */
+  private def parsePigStorageFile(fileList:List[File],hostMap:CompactHashMap[String,Int],ilfoStream:PrintStream){
     var count = 0
-    Source.fromFile(cooccsFile).getLines().filterNot(line => line.trim() == "").foreach(
+
+    fileList.foreach(f =>Source.fromFile(f).getLines().filterNot(line => line.trim() == "").foreach(
       line => {
         val fields = line.split("\\t")
 
@@ -61,18 +74,17 @@ class WikipediaCooccurrencesGraph {
         }else  LOG.error("Invailid line in file at \n -> \t" + line)
         count += 1
         if (count % 100000 == 0) LOG.info(String.format("%s lines processed.",count.toString))
-      })
+      }))
   }
 
-  def parseJSONStorageFile(cooccsFile:File,hostMap:CompactHashMap[String,Int],ilfoStream:PrintStream) {
+  /**
+   * Parse the cooccsFile generated using JSONStorage, it could also directly parse the Pig generated directory
+   * @param fileList The file list of files that stores cooccurrences count using JSONStorage
+   * @param hostMap The host map that map from uri to index
+   * @param ilfoStream  Integer List file output stream
+   */
+  private def parseJSONStorageFile(fileList:List[File],hostMap:CompactHashMap[String,Int],ilfoStream:PrintStream) {
     var count = 0
-
-    val fileList =
-    if (cooccsFile.isDirectory){
-      cooccsFile.listFiles().filter((f=> SimpleUtils.isPigPartFile(f))).sorted.toList
-    }  else{
-      List(cooccsFile)
-    }
 
     fileList.foreach(f => (Source.fromFile(f).getLines().filterNot(l => l.trim() == "").foreach(
       line =>{
@@ -116,16 +128,29 @@ class WikipediaCooccurrencesGraph {
     )))
   }
 
+  /**
+   * Parse the coocurrence count file(s) into cooccurence integer list given a hostMap.
+   * @param cooccsFile the cooccurrences count file(s), could be a directory containing the raw Pig output, or a merged file
+   * @param hostMap  The host map from uri to integer
+   * @param integerListFile  The output integerListFile
+   */
   def parseCooccsList(cooccsFile:File , hostMap:CompactHashMap[String,Int] , integerListFile:File) {
     LOG.info("Parsing Cooccurrences into Integer List")
 
     val ilfo: OutputStream = new FileOutputStream(integerListFile)
     val ilfoStream = new PrintStream(ilfo, true)
 
+    val fileList =
+      if (cooccsFile.isDirectory){
+        cooccsFile.listFiles().filter((f=> SimpleUtils.isPigPartFile(f))).sorted.toList
+      }  else{
+        List(cooccsFile)
+    }
+
     if (cooccsFile.getName.endsWith(".tsv")){
-      parsePigStorageFile(cooccsFile,hostMap,ilfoStream)
+      parsePigStorageFile(fileList,hostMap,ilfoStream)
     }else{
-      parseJSONStorageFile(cooccsFile,hostMap,ilfoStream)
+      parseJSONStorageFile(fileList,hostMap,ilfoStream)
     }
   }
 }

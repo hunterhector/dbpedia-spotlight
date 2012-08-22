@@ -39,7 +39,7 @@
                 </launcher>
                 <launcher>
                     <id>semantic</id>
-                    <mainClass>org.dbpedia.spotlight.graph.SemanticGraph</mainClass>
+                    <mainClass>org.dbpedia.spotlight.graph.MWMergedGraph</mainClass>
                     <args>
                         <arg>../conf/graph.properties</arg>
                     </args>

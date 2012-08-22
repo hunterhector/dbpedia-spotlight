@@ -11,8 +11,20 @@ import collection.mutable.ListBuffer
  * Time: 1:38 PM
  */
 
-//use a ListBuffer to store the arcs because it subject to frequent changes
-//Arrays are strictly sorted
+/**
+ * An implementation of a subgraph for Arclablled graph.
+ *
+ * With a super graph and a set of nodes provided. The class will initially generate a graph that include
+ * all arcs between or within N-hop distance of these nodes. The hop parameter can be used to controlled
+ * the number of hop desired.
+ *
+ * The subgraph can be get as an Integer arc list, which can be easily extended by adding arcs and nodes to
+ * it.
+ *
+ * @param superGraph An ArcLabelledImmutableGraph that is the super graph of this subgraph
+ * @param nodeSet A Set of Integer indicating the basic set of nodes to generate the subgraph
+ * @param hop The number of hop to which neighbours will be included in the subgraph
+ */
 class ArcLabelledSubGraph(superGraph:ArcLabelledImmutableGraph,nodeSet: Set[Int], hop:Int) {
   val LOG = LogFactory.getLog(this.getClass)
 
@@ -37,7 +49,14 @@ class ArcLabelledSubGraph(superGraph:ArcLabelledImmutableGraph,nodeSet: Set[Int]
   if (subgraphSize > 0 && subgraphNode(subgraphSize - 1) >= supergraphNumNodes) throw new IllegalArgumentException("Subnode index out of bounds (larger than supergraph number of nodes): "+subgraphNode(subgraphSize - 1))
 
 
-  //Expand the initial SubGraphNodes. And build up the arcList
+  /**
+   * Recursively expand the sub graph to reach the N-hop neighbour.
+   *
+   * @param currentSubGraphNode The current sub graph nodes array
+   * @param currentArcList The current arc list
+   * @param n number of hops desired to reach from the current graph
+   * @return  A tuple containing the expanded sub graph nodes and arc list
+   */
   private def build(currentSubGraphNode:Array[Int],currentArcList:ListBuffer[(Int,Int,Float)],n:Int):(Array[Int],ListBuffer[(Int,Int,Float)]) = {
     if (n == 0){
       (currentSubGraphNode,currentArcList)
@@ -106,20 +125,40 @@ class ArcLabelledSubGraph(superGraph:ArcLabelledImmutableGraph,nodeSet: Set[Int]
     })
   }
 
+  /**
+   * Return the corresponding supergraph index of a subgraph index
+   *
+   * @param x The subgraph index
+   * @return  The corresponding supergraph index
+   */
   def toSupergraphNode(x:Int):Int = {
     if (x < 0 || x>= subgraphSize) throw new IllegalArgumentException
     subgraphNode(x)
   }
 
+  /**
+   * Return the corresponding subgraph index of a supergraph index
+   * @param x The supergraph index
+   * @return  The corresponding subgraph index
+   */
   def fromSupergraphNode(x:Int):Int = {
     if (x < 0 || x>= supergraphNumNodes) throw new IllegalArgumentException
     supergraphNode(x)
   }
 
+  /**
+   * Return the subgraph as a arc list, each arc is defined by 2 Integer and a weight
+   * @return A ListBuffer that represent the graph
+   */
   def getArcList = {
     subgraphArcList
   }
 
+  /**
+   * Return a arc List which extends to both direction. It is useful because most of the
+   * graphs used to represent the semantic relations are in essential bi-directional
+   * @return
+   */
   def getBidirectionalArcList = {
     val reverseArcList = subgraphArcList.map(arc=>{(arc._2,arc._1,arc._3)})
     subgraphArcList ++ reverseArcList

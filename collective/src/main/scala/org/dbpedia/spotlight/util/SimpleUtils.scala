@@ -12,7 +12,11 @@ import net.sf.json.JSONObject
 
 object SimpleUtils {
 
-  //TODO: This is bad because Regex may match, but simple pig dump data are not that well formed, it may run into problem, should use standard format like JSON
+  /**
+   * Trying to use regex to match hadoop tuple output into a map
+   * @param bagString
+   * @return
+   */
   def hadoopTuplesToMap(bagString:String):Map[String,Int] = {
     var targetMap = Map.empty[String,Int]
     val pattern = """\((.*?),(\d+)\)""".r
@@ -23,6 +27,11 @@ object SimpleUtils {
     targetMap
   }
 
+  /**
+   * guessing whether the file is a Hadoop part file from the name
+   * @param f The file to be examined
+   * @return true if it is a part file
+   */
   def isPigPartFile(f:File) = {
     val name = f.getName
     val pattern = """^part-r-\d+$""".r

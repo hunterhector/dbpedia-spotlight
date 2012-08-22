@@ -28,11 +28,17 @@ import org.apache.commons.logging.LogFactory
 */
 
 /**
- * Just write a runner to see how things work and test whether the new method works
+ * A sample runner to show how things work, you could run this method to see if things are correctly set up
+ * Two command line arguments need to be feed: 1. the server.properties that stores basic spotlight settings and
+ * 2. the graph.properties file.
+ *
+ * The result will be simply dumped to standard out, showing both the original and graph-adjusted scores and the best candidate
+ *
  * User: hector
  * Date: 5/29/12
  * Time: 4:25 PM
  */
+
 
 object GraphBasedDisambiguatorRunner {
   val LOG = LogFactory.getLog(this.getClass)

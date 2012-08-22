@@ -21,9 +21,18 @@ import es.yrbcn.graph.weighted._
  * @author hector.liu
  */
 
+/**
+ * Class that wrap methods to create or read from WebGraph objects/files
+ */
 object GraphUtils {
   val LOG = LogFactory.getLog(this.getClass)
 
+  /**
+   * Build from the integer list file an ImmutableGraph
+   * @param integerListFile
+   * @param numNodes
+   * @return An ImmutableGraph
+   */
   def buildGraph(integerListFile: File, numNodes: Int): ImmutableGraph = {
     val graph = new ArrayListMutableGraph()
     graph.addNodes(numNodes)
@@ -57,6 +66,11 @@ object GraphUtils {
 
   }
 
+  /**
+   * Build fromt he Integer list file a ArclabelledImmutableGraph, the label actually encode weight of an arc
+   * @param integerListFile
+   * @return an ArclabelledImmutableGraph representing the weighted graph
+   */
   def buildWeightedGraphFromFile(integerListFile: File): ArcLabelledImmutableGraph = {
     LOG.info(String.format("Creating a weigted graph"))
 
@@ -69,6 +83,13 @@ object GraphUtils {
     aig
   }
 
+  /**
+   * Build fromt he Integer list file a ArclabelledImmutableGraph, the label actually encode weight of an arc,
+   * but it need a parameter to specify number of nodes this graph will have
+   * @param integerListFile
+   * @param numNodes
+   * @return an ArclabelledImmutableGraph representing the weighted graph
+   */
   def buildWeightedGraphFromFile(integerListFile: File, numNodes: Int): ArcLabelledImmutableGraph = {
     LOG.info(String.format("Creating a weighted graph"))
 
@@ -81,6 +102,11 @@ object GraphUtils {
     aig
   }
 
+  /**
+   * Build a weighted graph from triples list,
+   * @param triples
+   * @return an ArclabelledImmutableGraph representing the weighted graph
+   */
   def buildWeightedGraphFromTriples(triples:List[(Int,Int,Float)]): ArcLabelledImmutableGraph = {
     LOG.debug("Creating a weighted graph")
 
@@ -93,6 +119,13 @@ object GraphUtils {
     aig
   }
 
+  /**
+   * Build a weighted graph from triples list,
+   * but it need a parameter to specify number of nodes this graph will have
+   * @param triples
+   * @param numNodes
+   * @return an ArclabelledImmutableGraph representing the weighted graph
+   */
   def buildWeightedGraphFromTriples(triples:List[(Int,Int,Float)], numNodes:Int): ArcLabelledImmutableGraph = {
     LOG.debug("Creating a weighted graph")
 
@@ -117,6 +150,10 @@ object GraphUtils {
     alg
   }
 
+  /**
+   * Dump a labelled graph, for debugging purpose
+   * @param g The graph to be dumped
+   */
   def dumpLabelledGraph(g: ArcLabelledImmutableGraph) {
     LOG.debug("Dumping the labelled graph for debug purposes")
 
@@ -130,6 +167,12 @@ object GraphUtils {
     }
   }
 
+  /**
+   * Store the immutable graph as BVGraph
+   * @param g The input immutable graph
+   * @param path The path to which the graph should be stored
+   * @param baseName The basename of the graph to be stored as
+   */
   def storeGraph(g: ImmutableGraph, path:String, baseName: String) {
     val fullPath = path + baseName
 
@@ -138,6 +181,12 @@ object GraphUtils {
     LOG.info("Graph generated.")
   }
 
+  /**
+   * Store the weighted graph as BVGraph and the labels
+   * @param g The weighted graph to be stored
+   * @param path The path to which the graph going to be stored
+   * @param baseName The base name of the graph to be stored as
+   */
   def storeWeightedGraph(g: ArcLabelledImmutableGraph, path: String, baseName: String) {
     val fullPath = path + baseName
 
@@ -152,6 +201,12 @@ object GraphUtils {
     LOG.info("Graph generated.")
   }
 
+  /**
+   * Load graph as a BVGraph
+   * @param path  path to the graph
+   * @param baseName basename of the graph
+   * @return the BVGraph
+   */
   def loadBVGraph(path:String, baseName: String) = {
     val fullPath = path + baseName
 
@@ -161,6 +216,13 @@ object GraphUtils {
     g
   }
 
+  /**
+   * Load graph as Immutable graph
+   * @param path path to the graph
+   * @param baseName basename of the graph
+   * @param offline whether to load it on disk (offline) or in memory
+   * @return The loaded Immutable graph
+   */
   def loadAsImmutable(path:String, baseName:String, offline: Boolean) = {
     val fullPath = path + baseName
 
@@ -170,14 +232,28 @@ object GraphUtils {
     g
   }
 
-  def loadAsArcLablelled(path:String, basename:String, offline: Boolean) = {
-    val fullPath = path + basename
+
+  /**
+   * Load graph as Arc labelled Immutable graph
+   * @param path path to the graph
+   * @param baseName basename of the graph
+   * @param offline whether to load it on disk (offline) or in memory
+   * @return The loaded Immutable graph
+   */
+  def loadAsArcLablelled(path:String, baseName:String, offline: Boolean) = {
+    val fullPath = path + baseName
     LOG.info("Loading the graph from "+fullPath+" as ArcLablelledGraph")
     val g = if (offline) ArcLabelledImmutableGraph.loadOffline(fullPath) else ArcLabelledImmutableGraph.load(fullPath)
     LOG.info("Done")
     g
   }
 
+  /**
+   * Get the transpose graph of a labelled graph
+   * @param g The input graph
+   * @param batchSize Number of nodes to be loaded into memory at one time.
+   * @return
+   */
   def transpose(g:ArcLabelledImmutableGraph,batchSize:Int) = {
     LOG.info("Trasposing the graph...")
     val tg = Transform.transposeOffline(g,batchSize)

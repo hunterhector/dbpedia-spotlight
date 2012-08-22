@@ -21,15 +21,18 @@ import com.officedepot.cdap2.collection.CompactHashMap
  */
 
 /**
- * Construct a referent graph described in Han to compute the evidence population
- * This graph can be viewed as a subgraph extracted from the graph of all entities
- * There are
- * ->two kinds of vertices: entity (represented by DBpediaResource) and surfaceform
- * ->two kinds of edge: between entities of different surfaceforms and from surfaceform to entity
+ * Construct a referent graph described in Han's paper to compute the evidence population
+ * This graph can be viewed as a combination of the subgraph extracted from the graph of all entities connected with the ambiguous surface forms
+ * So there are:
+ * ->two kinds of vertices: entity (represented by DBpediaResource) and surface form
+ * ->two kinds of edge: between entities (bi-directional) and from surface form to entity (uni-directional)
+ *
+ * Han's paper is full referenced as:
+ * X. Han, “Collective Entity Linking in Web Text : A Graph-Based Method,” in Proceedings of the 34th international ACM SIGIR conference on Research and development in Information, 2011, pp. 765-774.
  * @author Hectorliu
  * @param scoredSf2CandsMap
  */
-class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: CompactHashMap[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)], uri2IdxMap: CompactHashMap[String,Int], teleportationConstant:Float) {
+class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: CompactHashMap[SurfaceFormOccurrence,(List[DBpediaResourceOccurrence],Double)], uri2IdxMap: CompactHashMap[String,Int], config:GraphConfiguration) {
   private val LOG = LogFactory.getLog(this.getClass)
 
   LOG.debug("Initializing Graph Object.")
@@ -121,7 +124,12 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
     g
   }
 
-   //the code is quite not functional, there might be better way to do this
+  /**
+   * Return the best k results after evidence population.
+   *
+   * @param k Number of best results to be returned if existed
+   * @return k results with the highest rank in descending order
+   */
   def getResult (k: Int): Map[SurfaceFormOccurrence,List[DBpediaResourceOccurrence]] = {
     val rankVector = runPageRank(rg)
     val tmpResult = new mutable.HashMap[SurfaceFormOccurrence,ListBuffer[DBpediaResourceOccurrence]]()
@@ -153,8 +161,17 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
     result
   }
 
+  /**
+   * make the vector Stochastic (L1 norm equal to 1) so that the WeightedPageRank method will accept it
+   *
+   *
+   * @param vector the initial vector
+   * @return the resulted stochatic vector
+   */
   private def makeStochastic(vector:DoubleArrayList):DoubleArrayList = {
     val l1Sum = l1Norm(vector)
+    if (l1Sum == 0) return vector //if the l1 norm is 0 than actually it can't be stochastic. It will be simply returned
+
     (0 to vector.size-1)foreach(idx => {
       val ori = vector.get(idx)
       vector.set(idx,ori/l1Sum)
@@ -162,6 +179,11 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
     vector
   }
 
+  /**
+   * Calculate the L1Norm (sum of the abs of value in the list)
+   * @param a The list to be examined
+   * @return
+   */
   private def l1Norm (a: DoubleArrayList): Double ={
     a.toDoubleArray().foldLeft(0.0)((norm,v)=>{
       norm + math.abs(v)
@@ -169,23 +191,11 @@ class ReferentGraph(semanticGraph:ArcLabelledImmutableGraph, scoredSf2CandsMap: 
   }
 
   private def runPageRank(g: ArcLabelledImmutableGraph) : Array[Double] = {
-    //TODO: make parameters configurable
     LOG.debug("Running page ranks...")
-    //accoding to Han, they use weakly preferential
-    WeightedPageRankWrapper.run(g,WeightedPageRank.DEFAULT_ALPHA,false,WeightedPageRank.DEFAULT_THRESHOLD,10,makeStochastic(initialVector),preferenceVector)
 
-/*
-    val pr:WeightedPageRankPowerMethod  = new WeightedPageRankPowerMethod(g)
-    pr.alpha = WeightedPageRank.DEFAULT_ALPHA
-    pr.stronglyPreferential = false
-    pr.start = initialVector
+    val iter = config.getOrElse("org.dbpedia.spotlight.graph.pagerank.iter","20").toInt
 
-    val deltaStop = new WeightedPageRank.NormDeltaStoppingCriterion(WeightedPageRank.DEFAULT_THRESHOLD)
-    val iterStop = new WeightedPageRank.IterationNumberStoppingCriterion(WeightedPageRank.DEFAULT_MAX_ITER)
-    val finalStop = WeightedPageRank.or(deltaStop, iterStop)
-    //TODO problem here: can't compile with these line in scala, but can successfully call in java
-    //pr.stepUntil(finalStop)
-
-    pr.rank*/
+    //use the Java Wrapper to run the WeightedPageRank, running it direactly from scala generate unexpected errors
+    WeightedPageRankWrapper.run(g,WeightedPageRank.DEFAULT_ALPHA,false,WeightedPageRank.DEFAULT_THRESHOLD,iter,makeStochastic(initialVector),preferenceVector)
   }
 }
