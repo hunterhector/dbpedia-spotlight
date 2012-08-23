@@ -41,7 +41,7 @@ import org.apache.commons.logging.LogFactory
 
 
 object GraphBasedDisambiguatorRunner {
-  val LOG = LogFactory.getLog(this.getClass)
+  private val LOG = LogFactory.getLog(this.getClass)
 
   def main(args: Array[String]) {
     if(args.length != 2) LOG.error("Please specify server config file and graph config file location.")
@@ -79,7 +79,7 @@ object GraphBasedDisambiguatorRunner {
     }
   }
 
-  def process(text: String, spotter: Spotter, disambiguator: ParagraphDisambiguatorJ, numOfResults: Int): List[(SurfaceFormOccurrence, java.util.List[DBpediaResourceOccurrence])] = {
+  private def process(text: String, spotter: Spotter, disambiguator: ParagraphDisambiguatorJ, numOfResults: Int): List[(SurfaceFormOccurrence, java.util.List[DBpediaResourceOccurrence])] = {
     val spots: List[SurfaceFormOccurrence] = spotter.extract(new Text(text)).toList
 
     var bestKforOccs: List[(SurfaceFormOccurrence, java.util.List[DBpediaResourceOccurrence])] = List()
@@ -97,13 +97,13 @@ object GraphBasedDisambiguatorRunner {
     bestKforOccs
   }
 
-  val shortPassage = "Soccer Aid: England glory\n\nEngland regained the Soccer Aid crown" +
+  private val shortPassage = "Soccer Aid: England glory\n\nEngland regained the Soccer Aid crown" +
     "with a deserved 3-1 win over the Rest of the World at Old Trafford on Sunday evening.\n " +
     "Goals from former United striker Teddy Sheringham, actor Jonathan Wilkes and ex-Sunderland" +
     "star Kevin Phillips secured a third Soccer Aid win for the Three Lions who had earlier gone behind" +
     "to a sublime strike from Kasabian guitarist Sergio Pizzorno.\n"
 
-  val passage = "Soccer Aid: England glory\n\nEngland regained the Soccer Aid crown" +
+  private val passage = "Soccer Aid: England glory\n\nEngland regained the Soccer Aid crown" +
     "with a deserved 3-1 win over the Rest of the World at Old Trafford on Sunday evening.\n " +
     "Goals from former United striker Teddy Sheringham, actor Jonathan Wilkes and ex-Sunderland" +
     "star Kevin Phillips secured a third Soccer Aid win for the Three Lions who had earlier gone behind" +
@@ -122,11 +122,11 @@ object GraphBasedDisambiguatorRunner {
     "and shot from United fan Murs, coming off the right wing.\n\nPhillips blasted both a shot and a " +
     "free-kick over the bar soon after, before the Rest of the World"
 
-    val shortCSAWSample = "Primary Navigation Secondary Navigation Search: Nearly 60 militants killed in southern Afghanistan Tue Oct 7, 9:14 AM ET"+
+  private val shortCSAWSample = "Primary Navigation Secondary Navigation Search: Nearly 60 militants killed in southern Afghanistan Tue Oct 7, 9:14 AM ET"+
     "KABUL (Reuters) - U.S.-led coalition and Afghan security forces killed nearly 60 militants during separate clashes in southern"+
     "Afghanistan, the U.S. military and a police official said Tuesday."
 
-    val CSAWSample="Primary Navigation Secondary Navigation Search: Nearly 60 militants killed in southern Afghanistan Tue Oct 7, 9:14 AM ET"+
+  private  val CSAWSample="Primary Navigation Secondary Navigation Search: Nearly 60 militants killed in southern Afghanistan Tue Oct 7, 9:14 AM ET"+
     "KABUL (Reuters) - U.S.-led coalition and Afghan security forces killed nearly 60 militants during separate clashes in southern"+
     "Afghanistan, the U.S. military and a police official said Tuesday. Violence has surged in the war-torn country with some 3,800 people,a"+
     "third of them civilians, killed as a result of the conflict by the end of July this year, according to the United Nations. U.S.-led"+

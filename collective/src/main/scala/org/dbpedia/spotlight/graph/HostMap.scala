@@ -14,9 +14,10 @@ import com.officedepot.cdap2.collection.{CompactHashMap, CompactHashSet}
  */
 
 object HostMap {
-  val LOG = LogFactory.getLog(this.getClass)
+  private val LOG = LogFactory.getLog(this.getClass)
 
   /**
+   * This method builds up the host map and store it.
    * Create a one-to-one host map from URI to Integer, used as the base for all occ based graph
    * @param occsFile  the occurrence file: occs.tsv or occs.uriSorted.tsv, created during indexing
    * @param mapFile   the output file containing the one-to-one mapping

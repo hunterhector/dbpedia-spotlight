@@ -46,7 +46,7 @@ object GraphMaker{
 
     //parse the occSrcFile and store the parsed result as an IntegerList
     val wog = new WikipediaOccurrenceGraph
-    wog.parseOccsList(occsSrcFile,hostMap, occInterListFile)
+    wog.buildTripleList(occsSrcFile,hostMap, occInterListFile)
 
     //build a weighted graph and store
     val ocwg = GraphUtils.buildWeightedGraphFromFile(occInterListFile,numberOfNodes)
@@ -78,7 +78,7 @@ object GraphMaker{
 
     //parse the cooccsSrcFile and store the parsed result as an IntegerList
     val wcg = new WikipediaCooccurrencesGraph
-    wcg.parseCooccsList(cooccsSrcFile,hostMap,cooccInterListFile)
+    wcg.buildTripleList(cooccsSrcFile,hostMap,cooccInterListFile)
 
     //build a weighted graph and store.
     //We should use the method that specify a node number, which make it possible to have nodes with no arcs

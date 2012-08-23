@@ -38,7 +38,7 @@
                     </jvmArgs>
                 </launcher>
                 <launcher>
-                    <id>semantic</id>
+                    <id>merge</id>
                     <mainClass>org.dbpedia.spotlight.graph.MWMergedGraph</mainClass>
                     <args>
                         <arg>../conf/graph.properties</arg>
@@ -52,7 +52,7 @@
                     <mainClass>org.dbpedia.spotlight.disambiguate.GraphBasedDisambiguatorRunner</mainClass>
                     <args>
                         <arg>../conf/server.properties</arg>
-                        <arg>../conf/graph-runonly-merged.properties</arg>
+                        <arg>../conf/graph.properties</arg>
                     </args>
                     <jvmArgs>
                         <jvmArg>-Xmx7G</jvmArg>

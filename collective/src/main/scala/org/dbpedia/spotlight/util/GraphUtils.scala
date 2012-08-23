@@ -25,7 +25,7 @@ import es.yrbcn.graph.weighted._
  * Class that wrap methods to create or read from WebGraph objects/files
  */
 object GraphUtils {
-  val LOG = LogFactory.getLog(this.getClass)
+  private val LOG = LogFactory.getLog(this.getClass)
 
   /**
    * Build from the integer list file an ImmutableGraph

@@ -10,6 +10,10 @@ import net.sf.json.JSONObject
  * Time: 1:01 AM
  */
 
+
+/**
+ * A class for other util methods
+ */
 object SimpleUtils {
 
   /**

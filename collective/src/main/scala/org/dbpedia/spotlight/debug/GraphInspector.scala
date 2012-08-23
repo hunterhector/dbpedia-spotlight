@@ -1,6 +1,5 @@
 package org.dbpedia.spotlight.debug
 
-import java.io.File
 import org.dbpedia.spotlight.graph.ArcLabelledSubGraph
 import org.dbpedia.spotlight.util.{GraphConfiguration, GraphUtils}
 import org.apache.commons.logging.LogFactory

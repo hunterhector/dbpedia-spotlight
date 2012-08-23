@@ -55,7 +55,7 @@ import it.unimi.dsi.webgraph.{ImmutableGraph, Transform}
 
 class GraphBasedDisambiguator(val candidateSearcher: CandidateSearcher, val contextSearcher:MergedOccurrencesContextSearcher, val graphConfigFileName: String) extends ParagraphDisambiguator {
 
-  val graphConfig = new GraphConfiguration(graphConfigFileName)
+  private val graphConfig = new GraphConfiguration(graphConfigFileName)
 
   private val LOG = LogFactory.getLog(this.getClass)
 

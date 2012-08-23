@@ -15,20 +15,23 @@ import org.apache.commons.logging.LogFactory
  */
 
 /**
- * A merged graph using the M&W method to incorporate coocurrences graph and occurrences graph.
+ * A merged graph using a method similar to the M&W method to incorporate co-occurrences graph and occurrences graph to capture the Wikipedia entity relations.
+ *
+ * The M&W's method on finding semantic relation between two wiki page is described here:
+ * - D. Milne and I. H. Witten, “Learning to link with Wikipedia,” Proceeding of the 17th ACM conference on Information and knowledge mining - CIKM  ’08, p. 509, 2008.
  *
  * Here we are interested in the transpose graph of the occurrences graph because we are interested in the
- * indegree of a particular node -- which is the outdegree of the corresponding node in the transpose graph
+ * in degree of a particular node -- which is the out  degree of the corresponding node in the transpose graph
  *
  * The two graph passed in should have the same number of nodes or a InitializationException will be thrown.
  * Actually, each index in these graph should be the same node, this was enforced during generation of graph
  * already using the HostMap.
  *
  * @param occTranGraph The transpose graph of the occurrences graph
- * @param cooccsGraph The cooccurrences graph
+ * @param cooccsGraph The co-occurrences graph
  */
 class MWMergedGraph(occTranGraph: ArcLabelledImmutableGraph, cooccsGraph: ArcLabelledImmutableGraph) {
-    val LOG = LogFactory.getLog(this.getClass)
+   private val LOG = LogFactory.getLog(this.getClass)
     val nodeNumber = occTranGraph.numNodes()
 
     if (occTranGraph.numNodes() != cooccsGraph.numNodes()){
@@ -59,10 +62,10 @@ class MWMergedGraph(occTranGraph: ArcLabelledImmutableGraph, cooccsGraph: ArcLab
 
   /**
    * Core function that build the integer list that represent the result graph
-   * @param integerListFile The output integer list file.
+   * @param tripleListFile The output file store each arc per line as a tab separated triple
    */
-    def buildIntegerList(integerListFile:File)  {
-      val ilfo: OutputStream = new FileOutputStream(integerListFile)
+    def buildTripleList(tripleListFile:File)  {
+      val ilfo: OutputStream = new FileOutputStream(tripleListFile)
       val ilfoStream = new PrintStream(ilfo, true)
 
       val indegreeMap = getInlinkStats()
@@ -92,7 +95,7 @@ class MWMergedGraph(occTranGraph: ArcLabelledImmutableGraph, cooccsGraph: ArcLab
       LOG.info("Done.")
     }
 
-    // the return value is not necessarily allowNonNegative. if maxIn/commonInLinks > wikisize/minIn, it will return negative value
+    // the return value is not necessarily Non-Negative. if maxIn/commonInLinks > wikisize/minIn, it will return negative value
     private def mwSemanticRelatedness(indegreeA:Int,indegreeB:Int,inlinksA:Array[Int],inlinksB:Array[Int],cooccCount:Int,wikiSize:Int) = {
       val commonInLinks = SimpleUtils.findCommonInSortedArray(inlinksA,inlinksB)
       val maxIn = math.max(indegreeA,indegreeB)
@@ -142,7 +145,7 @@ object MWMergedGraph{
 
      val sgFile = new File(sgIntegerListFileName)
 
-     sg.buildIntegerList(sgFile)
+     sg.buildTripleList(sgFile)
 
      val g = GraphUtils.buildWeightedGraphFromFile(sgFile,graphConfig.getNodeNumber)
 

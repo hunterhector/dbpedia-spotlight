@@ -15,20 +15,19 @@ import org.dbpedia.spotlight.model.SpotlightConfiguration.DisambiguationPolicy
  */
 
 class GraphBasedDisambiguatorTest{
-  val configFileName = "../conf/server.properties"
+  val spotlightConfigFileName = "../conf/server.properties"
+  val graphConfigFileName = "../conf/graph.properties"
   val spotterName = "Default"
-  val disambiguatorName = "Document"
 
-  val config = new SpotlightConfiguration(configFileName)
+  val config = new SpotlightConfiguration(spotlightConfigFileName)
   val factory = new SpotlightFactory(config)
 
   val spotterPolicy = SpotterPolicy.valueOf(spotterName)
   val spotter = factory.spotter(spotterPolicy)
 
-  val disambiguationPolicy = DisambiguationPolicy.valueOf(disambiguatorName)
-  val disambiguator = factory.disambiguator(disambiguationPolicy)
+  val disambiguator = new ParagraphDisambiguatorJ(new GraphBasedDisambiguator(factory.candidateSearcher,factory.contextSearcher,graphConfigFileName))
 
-  @Test        // just try out test
+  @Test
   def testDisambiguatorName() {
       val name = "GraphBasedDisambiguatorRunner"
       println(disambiguator.name)

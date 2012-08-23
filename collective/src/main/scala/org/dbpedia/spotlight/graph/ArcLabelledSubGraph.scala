@@ -12,23 +12,24 @@ import collection.mutable.ListBuffer
  */
 
 /**
- * An implementation of a subgraph for Arclablled graph.
+ * An implementation of a sub graph for ArclablledGraph.
  *
  * With a super graph and a set of nodes provided. The class will initially generate a graph that include
  * all arcs between or within N-hop distance of these nodes. The hop parameter can be used to controlled
- * the number of hop desired.
+ * the number of hop desired. Non positive weighted arcs are by default removed, it can be included by setting
+ * the removeNonPositiveWeightedArc parameter
  *
  * The subgraph can be get as an Integer arc list, which can be easily extended by adding arcs and nodes to
  * it.
  *
- * @param superGraph An ArcLabelledImmutableGraph that is the super graph of this subgraph
- * @param nodeSet A Set of Integer indicating the basic set of nodes to generate the subgraph
- * @param hop The number of hop to which neighbours will be included in the subgraph
+ * @param superGraph An ArcLabelledImmutableGraph that is the super graph of this sub graph
+ * @param nodeSet A Set of Integer indicating the basic set of nodes to generate the sub graph
+ * @param hop The number of hop to which neighbours will be included in the sub graph
+ * @param removeNonPositiveWeightedArc Whether to remove the non positive weighted arc, default to be true
  */
-class ArcLabelledSubGraph(superGraph:ArcLabelledImmutableGraph,nodeSet: Set[Int], hop:Int) {
-  val LOG = LogFactory.getLog(this.getClass)
-
-  var allowNonPositive = false          //allow non positive weights or not. could be parameterized
+class ArcLabelledSubGraph(superGraph:ArcLabelledImmutableGraph,nodeSet: Set[Int], hop:Int, removeNonPositiveWeightedArc: Boolean
+                           = true) {
+  private val LOG = LogFactory.getLog(this.getClass)
 
   val supergraphNumNodes = superGraph.numNodes()
   val supergraphNode = Array.fill[Int](supergraphNumNodes)(-1)
@@ -102,7 +103,7 @@ class ArcLabelledSubGraph(superGraph:ArcLabelledImmutableGraph,nodeSet: Set[Int]
   private def expandArcList(oldArcList:ListBuffer[(Int,Int,Float)], newArcMap: Map[(Int,Int),Float]) = {
     newArcMap.foreach{case ((currIdx,succIdx),weight) => {
        if (supergraphNode(succIdx) >= 0){  // check if the successor index is in our subgraph
-         if (allowNonPositive || weight > 0.0){
+         if (removeNonPositiveWeightedArc || weight > 0.0){
            val t = (supergraphNode(currIdx),supergraphNode(succIdx),weight)
            oldArcList += t
          }
@@ -185,7 +186,7 @@ class ArcLabelledSubGraph(superGraph:ArcLabelledImmutableGraph,nodeSet: Set[Int]
         val weight = labels(pos).getFloat
 
         if (supergraphNode(succIdx) >= 0){  // check if the successor index is in our subgraph
-          if (allowNonPositive || weight > 0.0){
+          if (removeNonPositiveWeightedArc || weight > 0.0){
             val t = (supergraphNode(currIdx),supergraphNode(succIdx),weight)
             tmpArcList += t
           }

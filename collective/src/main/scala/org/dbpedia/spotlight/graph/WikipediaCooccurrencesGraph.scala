@@ -32,7 +32,7 @@ import com.officedepot.cdap2.collection.CompactHashMap
  * So if you have run that class successfully, you don't have to do so.
 */
 class WikipediaCooccurrencesGraph {
-  val LOG = LogFactory.getLog(this.getClass)
+  private val LOG = LogFactory.getLog(this.getClass)
 
   /**
    * Parse the cooccsFile generated using PigStorage
@@ -132,12 +132,12 @@ class WikipediaCooccurrencesGraph {
    * Parse the coocurrence count file(s) into cooccurence integer list given a hostMap.
    * @param cooccsFile the cooccurrences count file(s), could be a directory containing the raw Pig output, or a merged file
    * @param hostMap  The host map from uri to integer
-   * @param integerListFile  The output integerListFile
+   * @param tripleListFile  The output file store each arc per line as a tab separated triple
    */
-  def parseCooccsList(cooccsFile:File , hostMap:CompactHashMap[String,Int] , integerListFile:File) {
+  def buildTripleList(cooccsFile:File , hostMap:CompactHashMap[String,Int] , tripleListFile:File) {
     LOG.info("Parsing Cooccurrences into Integer List")
 
-    val ilfo: OutputStream = new FileOutputStream(integerListFile)
+    val ilfo: OutputStream = new FileOutputStream(tripleListFile)
     val ilfoStream = new PrintStream(ilfo, true)
 
     val fileList =
@@ -176,7 +176,7 @@ object WikipediaCooccurrencesGraph{
 
       //parse the cooccsSrcFile and store the parsed result as an IntegerList
       val wcg = new WikipediaCooccurrencesGraph
-      wcg.parseCooccsList(cooccsSrcFile,hostMap,cooccInterListFile)
+      wcg.buildTripleList(cooccsSrcFile,hostMap,cooccInterListFile)
 
       //build a weighted graph and store.
       //We should use the method that specify a node number, which make it possible to have nodes with no arcs
