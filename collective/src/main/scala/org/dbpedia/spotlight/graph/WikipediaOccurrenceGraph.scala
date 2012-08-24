@@ -43,7 +43,8 @@ class WikipediaOccurrenceGraph {
           val srcUri = id.split("-")(0)
 
           if (targetUri != srcUri){
-            val weight = getWeight(new DBpediaResource(srcUri),new DBpediaResource(targetUri))
+            //val weight = getWeight(new DBpediaResource(srcUri),new DBpediaResource(targetUri))
+            val weight = 1.0
 
             val srcIndex = hostMap.getOrElse(srcUri,-1)
             val targetIndex = hostMap.getOrElse(targetUri,-1)
