@@ -103,7 +103,7 @@ class ArcLabelledSubGraph(superGraph:ArcLabelledImmutableGraph,nodeSet: Set[Int]
   private def expandArcList(oldArcList:ListBuffer[(Int,Int,Float)], newArcMap: Map[(Int,Int),Float]) = {
     newArcMap.foreach{case ((currIdx,succIdx),weight) => {
        if (supergraphNode(succIdx) >= 0){  // check if the successor index is in our subgraph
-         if (removeNonPositiveWeightedArc || weight > 0.0){
+         if (!removeNonPositiveWeightedArc || weight > 0.0){
            val t = (supergraphNode(currIdx),supergraphNode(succIdx),weight)
            oldArcList += t
          }
