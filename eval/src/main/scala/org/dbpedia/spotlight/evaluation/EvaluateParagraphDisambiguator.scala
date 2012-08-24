@@ -133,11 +133,12 @@ object EvaluateParagraphDisambiguator {
         //val topics = HashMapTopicalPriorStore.fromDir(new File("data/topics"))
         val disambiguators = Set(//new TopicalDisambiguator(factory.candidateSearcher,topics),
                                  //new TopicBiasedDisambiguator(factory.candidateSearcher,factory.contextSearcher,topics)
-                                 new TwoStepDisambiguator(factory.candidateSearcher,factory.contextSearcher)
-                                 //new GraphBasedDisambiguator(factory,"../conf/graph.properties")
+                                 //new TwoStepDisambiguator(factory.candidateSearcher,factory.contextSearcher)
+                                 new GraphBasedDisambiguator(factory.candidateSearcher,factory.contextSearcher,"../conf/graph.properties")
                                  //, new CuttingEdgeDisambiguator(factory),
                                  //new PageRankDisambiguator(factory)
                                 )
+
       val qFile = new File("/mnt/windows/Extra/Researches/data/kbp/queries/TAC_2010_KBP_Evaluation_Entity_Linking_Gold_Standard_V1.0/TAC_2010_KBP_Evaluation_Entity_Linking_Gold_Standard_V1.1/data/tac_2010_kbp_evaluation_entity_linking_queries.xml")
       val aFile = new File("/mnt/windows/Extra/Researches/data/kbp/queries/TAC_2010_KBP_Evaluation_Entity_Linking_Gold_Standard_V1.0/TAC_2010_KBP_Evaluation_Entity_Linking_Gold_Standard_V1.1/data/tac_2010_kbp_evaluation_entity_linking_query_types.tab")
       val sourceDir = new File("/mnt/windows/Extra/Researches/data/kbp/kbp2011/TAC_KBP_2010_Source_Data/TAC_2010_KBP_Source_Data/data")
