@@ -20,7 +20,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    
+
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -35,7 +35,7 @@
     <name>DBpedia Spotlight Indexing</name>
 
     <properties>
-        <heapspace.Xmx.indexer>-Xmx14g</heapspace.Xmx.indexer>
+        <javaOpts.Xmx>4g</javaOpts.Xmx> <!-- default that can be adjusted on the command line with -DjavaOpts.Xmx=... -->
         <spotlight.basedir>${project.basedir}/..</spotlight.basedir>
     </properties>
 
@@ -43,42 +43,94 @@
         <plugins>
 
             <plugin>
-                <groupId>org.scala-tools</groupId>
-                <artifactId>maven-scala-plugin</artifactId>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>${scala.maven.plugin.version}</version>
 
                 <configuration>
                     <launchers>
                         <launcher>
-                            <id>enrichtypes</id>
-                            <mainClass>org.dbpedia.spotlight.lucene.index.AddTypesToIndex</mainClass>
+                            <id>ExtractCandidateMap</id>
+                            <mainClass>org.dbpedia.spotlight.util.ExtractCandidateMap</mainClass>
                             <jvmArgs>
-                                <jvmArg>-Xmx8G</jvmArg>
+                                <jvmArg>-Xmx${javaOpts.Xmx}</jvmArg>
                             </jvmArgs>
-                            <args>
+                            <!--args>
                                 <arg>../conf/indexing-3.8.properties</arg>
-                            </args>
+                            </args-->
                         </launcher>
                         <launcher>
-                            <id>indexer</id>
+                            <id>ExtractOccsFromWikipedia</id>
+                            <mainClass>org.dbpedia.spotlight.lucene.index.ExtractOccsFromWikipedia</mainClass>
+                            <jvmArgs>
+                                <jvmArg>-Xmx${javaOpts.Xmx}</jvmArg>
+                            </jvmArgs>
+                            <!--args>
+                                <arg>../conf/indexing-3.8.properties</arg>
+                                <arg>output/occs.tsv</arg>
+                            </args-->
+                        </launcher>
+                        <launcher>
+                            <id>IndexLingPipeSpotter</id>
+                            <mainClass>org.dbpedia.spotlight.spot.lingpipe.IndexLingPipeSpotter</mainClass>
+                            <jvmArgs>
+                                <jvmArg>-Xmx${javaOpts.Xmx}</jvmArg>
+                            </jvmArgs>
+                            <!--args>
+                                <arg>../conf/indexing-3.8.properties</arg>
+                            </args-->
+                        </launcher>
+                        <launcher>
+                            <id>IndexMergedOccurrences</id>
                             <mainClass>org.dbpedia.spotlight.lucene.index.IndexMergedOccurrences</mainClass>
                             <jvmArgs>
-                                <jvmArg>-Xmx6G</jvmArg>
+                                <jvmArg>-Xmx${javaOpts.Xmx}</jvmArg>
                             </jvmArgs>
-                            <args>
-                                <arg>../conf/indexing.properties</arg>
-                                <arg>output/occs.uriSorted.tsv</arg>
+                            <!--args>
+                                <arg>../conf/indexing-3.8.properties</arg>
+                                <arg>/data/spotlight/3.7/occs.uriSorted.tsv</arg>
                                 <arg>overwrite</arg>
-                            </args>
+                            </args-->
                         </launcher>
                         <launcher>
-                            <id>enrichsf</id>
+                            <id>AddSurfaceFormsToIndex</id>
                             <mainClass>org.dbpedia.spotlight.lucene.index.AddSurfaceFormsToIndex</mainClass>
                             <jvmArgs>
-                                <jvmArg>-Xmx14G</jvmArg>
+                                <jvmArg>-Xmx${javaOpts.Xmx}</jvmArg>
                             </jvmArgs>
-                            <args>
+                            <!--args>
                                 <arg>../conf/indexing-3.8.properties</arg>
-                            </args>
+                            </args-->
+                        </launcher>
+                        <launcher>
+                            <id>CandidateIndexer</id>
+                            <mainClass>org.dbpedia.spotlight.lucene.index.CandidateIndexer</mainClass>
+                            <jvmArgs>
+                                <jvmArg>-Xmx${javaOpts.Xmx}</jvmArg>
+                            </jvmArgs>
+                            <!--args>
+                                <arg>../conf/indexing-3.8.properties</arg>
+                            </args-->
+                        </launcher>
+                        <launcher>
+                            <id>AddTypesToIndex</id>
+                            <mainClass>org.dbpedia.spotlight.lucene.index.AddTypesToIndex</mainClass>
+                            <jvmArgs>
+                                <jvmArg>-Xmx${javaOpts.Xmx}</jvmArg>
+                            </jvmArgs>
+                            <!--args>
+                                <arg>../conf/indexing-3.8.properties</arg>
+                            </args-->
+                        </launcher>
+                        <launcher>
+                            <id>CompressIndex</id>
+                            <mainClass>org.dbpedia.spotlight.lucene.index.CompressIndex</mainClass>
+                            <jvmArgs>
+                                <jvmArg>-Xmx${javaOpts.Xmx}</jvmArg>
+                            </jvmArgs>
+                            <!--args>
+                                <arg>../conf/indexing-3.8.properties</arg>
+                            </args-->
                         </launcher>
                         <launcher>
                             <id>topicsignatures</id>
@@ -96,10 +148,10 @@
                         <launcher>
                             <id>topicaltext</id>
                             <mainClass>org.dbpedia.spotlight.util.ExtractTopicalText</mainClass>
-			    <!--args>
-				<arg>/data/spotlight/enwiki-20101011-resolved-concepts.uriSorted.tsv</arg>
-				<arg>/home/pablo/Projects/DBpediaSpotlight/IavorJelev/uri_pairs/Politics2_uri_pairs.txt</arg>
-			    </args-->
+			                <!--args>
+                				<arg>/data/spotlight/enwiki-20101011-resolved-concepts.uriSorted.tsv</arg>
+                				<arg>/home/pablo/Projects/DBpediaSpotlight/IavorJelev/uri_pairs/Politics2_uri_pairs.txt</arg>
+			                </args-->
                             <jvmArgs>
                                 <jvmArg>-Xmx3G</jvmArg>
                             </jvmArgs>
@@ -108,8 +160,7 @@
                 </configuration>
             </plugin>
 
-<!--    Already install in parent pom
-                <plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-install-plugin</artifactId>
                 <version>${maven.install.plugin.version}</version>
@@ -129,7 +180,7 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>-->
+            </plugin>
 
         </plugins>
     </build>
@@ -137,10 +188,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.dbpedia.spotlight</groupId>
+            <artifactId>core</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.dbpedia.extraction</groupId>
             <artifactId>core</artifactId>
-            <version>2.0-SNAPSHOT</version>
-
         </dependency>
 
         <dependency>
@@ -148,13 +201,7 @@
             <artifactId>rio</artifactId>
             <version>1.0.10</version>
         </dependency>
-
         <dependency>
-            <groupId>org.dbpedia.spotlight</groupId>
-            <artifactId>core</artifactId>
-        </dependency>
-
-         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
             <version>3.6.0</version>
@@ -180,11 +227,57 @@
             <artifactId>lucene-phonetic</artifactId>
             <version>3.6.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.4.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>weka</groupId>
             <artifactId>weka</artifactId>
             <version>3.7.3</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>trove</groupId>
+            <artifactId>trove</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>jdbm</groupId>
+            <artifactId>jdbm</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.scalaj</groupId>
+            <artifactId>scalaj-collection_2.9.1</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.mahout</groupId>
+            <artifactId>mahout-collections</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.esotericsoftware.kryo</groupId>
+            <artifactId>kryo</artifactId>
+        </dependency>
+
+        <dependency>
+        	<groupId>org.apache.commons</groupId>
+        	<artifactId>commons-compress</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
         </dependency>
 
     </dependencies>

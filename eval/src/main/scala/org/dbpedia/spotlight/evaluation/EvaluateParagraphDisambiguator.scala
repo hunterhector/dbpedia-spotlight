@@ -21,13 +21,14 @@ import org.dbpedia.spotlight.io._
 import org.apache.commons.logging.LogFactory
 import org.dbpedia.spotlight.disambiguate._
 import java.io.{PrintWriter, File}
-import org.dbpedia.spotlight.corpus.{KBPCorpus, PredoseCorpus, MilneWittenCorpus, AidaCorpus}
-
-import scalaj.collection.Imports._
+import org.dbpedia.spotlight.corpus.{PredoseCorpus, MilneWittenCorpus, AidaCorpus}
 
 import org.dbpedia.spotlight.model._
 import org.dbpedia.spotlight.filter.occurrences.{UriWhitelistFilter, RedirectResolveFilter, OccurrenceFilter}
 import scala.Some
+
+import scalaj.collection.Imports._
+
 
 /**
  * Evaluation for disambiguators that take one paragraph at a time, instead of one occurrence at a time.
@@ -122,8 +123,8 @@ object EvaluateParagraphDisambiguator {
         //val paragraphs = AnnotatedTextSource
         //                    .fromOccurrencesFile(new File(testFileName))
 
-        val redirectTCFileName  = if (args.size>1) args(1) else "../index/output/redirects_tc.tsv" //produced by ExtractCandidateMap
-        val conceptURIsFileName  = if (args.size>2) args(2) else "../index/output/conceptURIs.list" //produced by ExtractCandidateMap
+        val redirectTCFileName  = if (args.size>1) args(1) else "data/redirects_tc.tsv" //produced by ExtractCandidateMap
+        val conceptURIsFileName  = if (args.size>2) args(2) else "data/conceptURIs.list" //produced by ExtractCandidateMap
 
         //val default : Disambiguator = new DefaultDisambiguator(config)
         //val test : Disambiguator = new GraphCentralityDisambiguator(config)
@@ -133,22 +134,14 @@ object EvaluateParagraphDisambiguator {
         //val topics = HashMapTopicalPriorStore.fromDir(new File("data/topics"))
         val disambiguators = Set(//new TopicalDisambiguator(factory.candidateSearcher,topics),
                                  //new TopicBiasedDisambiguator(factory.candidateSearcher,factory.contextSearcher,topics)
-                                 //new TwoStepDisambiguator(factory.candidateSearcher,factory.contextSearcher)
-                                 new GraphBasedDisambiguator(factory.candidateSearcher,factory.contextSearcher,"../conf/graph.properties")
+                                 new TwoStepDisambiguator(factory.candidateSearcher,factory.contextSearcher)
                                  //, new CuttingEdgeDisambiguator(factory),
                                  //new PageRankDisambiguator(factory)
                                 )
 
-      val qFile = new File("/mnt/windows/Extra/Researches/data/kbp/queries/TAC_2010_KBP_Evaluation_Entity_Linking_Gold_Standard_V1.0/TAC_2010_KBP_Evaluation_Entity_Linking_Gold_Standard_V1.1/data/tac_2010_kbp_evaluation_entity_linking_queries.xml")
-      val aFile = new File("/mnt/windows/Extra/Researches/data/kbp/queries/TAC_2010_KBP_Evaluation_Entity_Linking_Gold_Standard_V1.0/TAC_2010_KBP_Evaluation_Entity_Linking_Gold_Standard_V1.1/data/tac_2010_kbp_evaluation_entity_linking_query_types.tab")
-      val sourceDir = new File("/mnt/windows/Extra/Researches/data/kbp/kbp2011/TAC_KBP_2010_Source_Data/TAC_2010_KBP_Source_Data/data")
-      val kbDir = new File("/mnt/windows/Extra/Researches/data/kbp/kbp2011/TAC_2009_KBP_Evaluation_Reference_Knowledge_Base/data")
-
         val sources = List(//AidaCorpus.fromFile(new File("/home/pablo/eval/aida/gold/CoNLL-YAGO.tsv")),
-                           //MilneWittenCorpus.fromDirectory(new File("/mnt/windows/Extra/Researches/data/dbpedia/eval/MilneWitten-wikifiedStories"))
-                           new KBPCorpus (qFile,aFile,sourceDir,kbDir)
-                           //PredoseCorpus.fromFile(new File("/home/pablo/eval/predose/predose_annotations.tsv"))
-                           )
+                           //MilneWittenCorpus.fromDirectory(new File("/home/pablo/eval/wikify/original"))
+                           PredoseCorpus.fromFile(new File("/home/pablo/eval/predose/predose_annotations.tsv")))
 
         val noNils = new OccurrenceFilter {
             def touchOcc(occ : DBpediaResourceOccurrence) : Option[DBpediaResourceOccurrence] = {

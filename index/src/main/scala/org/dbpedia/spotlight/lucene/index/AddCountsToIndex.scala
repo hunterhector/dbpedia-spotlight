@@ -37,15 +37,12 @@ package org.dbpedia.spotlight.lucene.index
  */
 
 import scalaj.collection.Imports._
-import org.dbpedia.spotlight.lucene.LuceneManager
 import org.dbpedia.spotlight.util.IndexingConfiguration
 import java.io.File
 import io.Source
 import org.dbpedia.spotlight.model.DBpediaResource
-import org.apache.lucene.store.FSDirectory
-import org.apache.avalon.framework.configuration.ConfigurationException
-import java.util.LinkedHashSet
 import org.apache.commons.logging.{LogFactory, Log}
+import org.dbpedia.spotlight.exceptions.ConfigurationException
 
 /**
  * If you indexed occurrences without storing counts and want to add them to the index.
@@ -86,9 +83,9 @@ object AddCountsToIndex {
     def main(args : Array[String]) {
         val indexingConfigFileName = args(0)
         val countsFileName = args(1)
+        val sourceIndexFileName = args(2)
 
         val config = new IndexingConfiguration(indexingConfigFileName)
-        val sourceIndexFileName = config.get("org.dbpedia.spotlight.index.dir")
         val targetIndexFileName = sourceIndexFileName+"-withCounts"
 
         if (!new File(countsFileName).exists)
