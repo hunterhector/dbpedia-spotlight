@@ -18,6 +18,7 @@
 
     <properties>
         <spotlight.basedir>${project.basedir}/..</spotlight.basedir>
+        <maven.scala.plugin.version>2.15.2</maven.scala.plugin.version>
     </properties>
 
     <build>
@@ -25,7 +26,8 @@
             <plugin>
             <groupId>org.scala-tools</groupId>
             <artifactId>maven-scala-plugin</artifactId>
-            <configuration>
+            <version>${maven.scala.plugin.version}</version>
+                <configuration>
                 <launchers>
                 <launcher>
                     <id>makegraph</id>
