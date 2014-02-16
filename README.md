@@ -20,12 +20,12 @@ You can use our demonstration [Web Service](http://github.com/dbpedia-spotlight/
 
 #### Run your own server
 
-If you need service reliability and lower response times, you can run DBpedia Spotlight in your own [In-House Server](https://github.com/dbpedia-spotlight/dbpedia-spotlight/wiki/Installation).
+If you need service reliability and lower response times, you can run DBpedia Spotlight in your own [In-House Server](https://github.com/dbpedia-spotlight/dbpedia-spotlight/wiki/Installation). Try our automated setup script for [dpkg](https://github.com/dbpedia-spotlight/dbpedia-spotlight/wiki/Debian-Package-Installation:-How-To):
 
-    wget http://spotlight.dbpedia.org/download/release-0.6/dbpedia-spotlight-quickstart-0.6.5.zip
-    unzip dbpedia-spotlight-quickstart-0.6.5.zip
-    cd dbpedia-spotlight-quickstart-0.6.5/
-    ./run.sh
+    wget http://spotlight.sztaki.hu/downloads/dbpedia-spotlight-0.6.deb
+    dpkg -i dbpedia-spotlight-0.6.deb
+    #Follow the installation assistant
+    /usr/bin/dbpedia-spotlight-[language]
 
 #### Build from source
 
@@ -35,8 +35,7 @@ We provide a [Java/Scala API](http://github.com/dbpedia-spotlight/dbpedia-spotli
 
 ## Licenses
 
-The program can be used under the terms of the [Apache License, 2.0](http://www.apache.org/licenses/LICENSE-2.0.html).
-Part of the code uses [LingPipe](http://alias-i.com/lingpipe/) under the [Royalty Free License](http://alias-i.com/lingpipe/licenses/lingpipe-license-1.txt). Therefore, this license may also apply to the output of the currently deployed web service.
+All the original code produced for DBpedia Spotlight is licensed under  [Apache License, 2.0](http://www.apache.org/licenses/LICENSE-2.0.html). Some modules have dependencies on [LingPipe](http://alias-i.com/lingpipe/) under the [Royalty Free License](http://alias-i.com/lingpipe/licenses/lingpipe-license-1.txt). Some of our original code (currently) depends on GPL-licensed or LGPL-licensed code and is therefore also GPL or LGPL, respectively. We are currently cleaning up the dependencies to release two builds, one purely GPL and one purely Apache License, 2.0.
 
 The documentation on this website is shared as [Creative Commons Attribution-ShareAlike 3.0 Unported License](http://en.wikipedia.org/wiki/Wikipedia:Text_of_Creative_Commons_Attribution-ShareAlike_3.0_Unported_License).
 

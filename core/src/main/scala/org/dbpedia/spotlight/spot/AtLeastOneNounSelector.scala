@@ -21,9 +21,8 @@ package org.dbpedia.spotlight.spot
 import com.aliasi.sentences.IndoEuropeanSentenceModel
 import java.io.File
 import org.dbpedia.spotlight.tagging.lingpipe.{LingPipeTaggedTokenProvider, LingPipeFactory}
-import scalaj.collection.Imports._
+import scala.collection.JavaConverters._
 
-import org.apache.commons.logging.LogFactory
 import org.dbpedia.spotlight.model._
 
 
@@ -33,8 +32,6 @@ import org.dbpedia.spotlight.model._
  * @author Joachim Daiber (removed tagging, changed to TaggedSpotSelector)
  */
 class AtLeastOneNounSelector extends TaggedSpotSelector {
-
-    private val LOG = LogFactory.getLog(this.getClass)
 
     var lastText = ""
     def select(occurrences: java.util.List[SurfaceFormOccurrence]) : java.util.List[SurfaceFormOccurrence] = {

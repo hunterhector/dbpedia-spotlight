@@ -23,24 +23,27 @@ import com.sun.jersey.api.container.grizzly.GrizzlyWebContainerFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dbpedia.spotlight.db.SpotlightModel;
-import org.dbpedia.spotlight.db.model.AnnotationTokenizer;
+import org.dbpedia.spotlight.db.model.TextTokenizer;
 import org.dbpedia.spotlight.disambiguate.ParagraphDisambiguatorJ;
 import org.dbpedia.spotlight.exceptions.InitializationException;
 import org.dbpedia.spotlight.exceptions.InputException;
-import org.dbpedia.spotlight.filter.annotations.CombineAllAnnotationFilters;
 import org.dbpedia.spotlight.model.DBpediaResource;
 import org.dbpedia.spotlight.model.SpotlightConfiguration;
 import org.dbpedia.spotlight.model.SpotlightFactory;
 import org.dbpedia.spotlight.model.SpotterConfiguration;
+import org.dbpedia.spotlight.sparql.SparqlQueryExecuter;
 import org.dbpedia.spotlight.spot.Spotter;
 import org.dbpedia.spotlight.model.SpotterConfiguration.SpotterPolicy;
 import org.dbpedia.spotlight.model.SpotlightConfiguration.DisambiguationPolicy;
+import scala.collection.JavaConverters;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -70,11 +73,13 @@ public class Server {
                         + "   or: mvn scala:run \"-DaddArgs=[config file]\"";
 
     //This is currently only used in the DB-based version.
-    private static AnnotationTokenizer tokenizer;
-
-    protected static CombineAllAnnotationFilters combinedFilters = null;
+    private static TextTokenizer tokenizer;
 
     private static String namespacePrefix = SpotlightConfiguration.DEFAULT_NAMESPACE;
+
+    private static SparqlQueryExecuter sparqlExecuter = null;
+
+    private static List<Double> similarityThresholds = new ArrayList<Double>();
 
     public static void main(String[] args) throws IOException, InterruptedException, URISyntaxException, ClassNotFoundException, InitializationException {
 
@@ -83,50 +88,14 @@ public class Server {
         if(args[0].endsWith(".properties")) {
             //We are using the old-style configuration file:
 
-            //Initialization, check values
-            try {
-                String configFileName = args[0];
-                configuration = new SpotlightConfiguration(configFileName);
-            } catch (Exception e) {
-                e.printStackTrace();
-                System.err.println("\n"+usage);
-                System.exit(1);
-            }
-
+            initByPropertiesFile(args[0]);
             serverURI = new URI(configuration.getServerURI());
-
-            // Set static annotator that will be used by Annotate and Disambiguate
-            final SpotlightFactory factory = new SpotlightFactory(configuration);
-
-            setDisambiguators(factory.disambiguators());
-            setSpotters(factory.spotters());
-            setNamespacePrefix(configuration.getDbpediaResource());
-
-            setCombinedFilters(new CombineAllAnnotationFilters(Server.getConfiguration()));
-
 
         } else {
             //We are using a model folder:
 
             serverURI = new URI(args[1]);
-
-            File modelFolder = null;
-            try {
-                modelFolder = new File(args[0]);
-            } catch (Exception e) {
-                e.printStackTrace();
-                System.err.println("\n"+usage);
-                System.exit(1);
-            }
-
-            SpotlightModel db = SpotlightModel.fromFolder(modelFolder);
-
-
-            setNamespacePrefix(db.properties().getProperty("namespace"));
-            setTokenizer(db.tokenizer());
-            setSpotters(db.spotters());
-            setDisambiguators(db.disambiguators());
-
+            initByModel(args[0]);
         }
 
         //ExternalUriWadlGeneratorConfig.setUri(configuration.getServerURI()); //TODO get another parameter, maybe getExternalServerURI since Grizzly will use this in order to find out to which port to bind
@@ -145,18 +114,6 @@ public class Server {
         threadSelector.start();
 
         System.err.println("Server started in " + System.getProperty("user.dir") + " listening on " + serverURI);
-
-        //Open browser
-        try {
-            String example1 = "annotate?text=At%20a%20private%20dinner%20on%20Friday%20at%20the%20Canadian%20Embassy,%20finance%20officials%20from%20seven%20world%20economic%20powers%20focused%20on%20the%20most%20vexing%20international%20economic%20problem%20facing%20the%20Obama%20administration.%20Over%20seared%20scallops%20and%20beef%20tenderloin,%20Treasury%20Secretary%20Timothy%20F.%20Geithner%20urged%20his%20counterparts%20from%20Europe,%20Canada%20and%20Japan%20to%20help%20persuade%20China%20to%20let%20its%20currency,%20the%20renminbi,%20rise%20in%20value%20a%20crucial%20element%20in%20redressing%20the%20trade%20imbalances%20that%20are%20threatening%20recovery%20around%20the%20world.%20But%20the%20next%20afternoon,%20the%20annual%20meetings%20of%20the%20International%20Monetary%20Fund%20ended%20with%20a%20tepid%20statement%20that%20made%20only%20fleeting%20and%20indirect%20references%20to%20the%20simmering%20currency%20tensions&confidence=0.2&support=20";
-            String example2 = "annotate?text=Brazilian%20oil%20giant%20Petrobras%20and%20U.S.%20oilfield%20service%20company%20Halliburton%20have%20signed%20a%20technological%20cooperation%20agreement,%20Petrobras%20announced%20Monday.%20%20%20%20The%20two%20companies%20agreed%20on%20three%20projects:%20studies%20on%20contamination%20of%20fluids%20in%20oil%20wells,%20laboratory%20simulation%20of%20well%20production,%20and%20research%20on%20solidification%20of%20salt%20and%20carbon%20dioxide%20formations,%20said%20Petrobras.%20Twelve%20other%20projects%20are%20still%20under%20negotiation.&confidence=0.0&support=0";
-            URI example = new URI(serverURI.toString() + example2);
-
-            java.awt.Desktop.getDesktop().browse(example);
-        }
-        catch (Exception e) {
-            System.err.println("Could not open browser. " + e);
-        }
 
         Thread warmUp = new Thread() {
             public void run() {
@@ -247,20 +204,12 @@ public class Server {
         return configuration;
     }
 
-    public static AnnotationTokenizer getTokenizer() {
+    public static TextTokenizer getTokenizer() {
         return tokenizer;
     }
 
-    public static void setTokenizer(AnnotationTokenizer tokenizer) {
+    public static void setTokenizer(TextTokenizer tokenizer) {
         Server.tokenizer = tokenizer;
-    }
-
-    public static CombineAllAnnotationFilters getCombinedFilters() {
-        return combinedFilters;
-    }
-
-    public static void setCombinedFilters(CombineAllAnnotationFilters combinedFilters) {
-        Server.combinedFilters = combinedFilters;
     }
 
     public static String getPrefixedDBpediaURL(DBpediaResource resource) {
@@ -269,5 +218,89 @@ public class Server {
 
     public static void setNamespacePrefix(String namespacePrefix) {
         Server.namespacePrefix = namespacePrefix;
+    }
+
+    private static void setSparqlExecuter(String endpoint, String graph)
+    {
+        if (endpoint == null || endpoint.equals(""))  endpoint= "http://dbpedia.org/sparql";
+        if (graph == null || graph.equals(""))  endpoint= "http://dbpedia.org";
+
+        Server.sparqlExecuter = new SparqlQueryExecuter(graph, endpoint);
+    }
+
+    public static SparqlQueryExecuter getSparqlExecute(){
+        return sparqlExecuter;
+    }
+
+    private static void setSimilarityThresholds( List<Double> similarityThresholds){
+       Server.similarityThresholds =  similarityThresholds;
+    }
+
+    public static  List<Double> getSimilarityThresholds(){
+       return similarityThresholds;
+    }
+
+
+    public static void initSpotlightConfiguration(String configFileName) throws InitializationException {
+
+        if(configFileName.endsWith(".properties")) {
+
+            initByPropertiesFile(configFileName);
+
+        } else {
+
+            //We are using a model folder:
+            initByModel(configFileName);
+
+        }
+
+        LOG.info(String.format("Initiated %d disambiguators.",disambiguators.size()));
+
+        LOG.info(String.format("Initiated %d spotters.",spotters.size()));
+
+    }
+
+    private static void initByPropertiesFile(String configFileName) throws  InitializationException {
+
+        //We are using the old-style configuration file:
+        //Initialization, check values
+        try {
+            configuration = new SpotlightConfiguration(configFileName);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("\n"+ usage);
+            System.exit(1);
+        }
+        // Set static annotator that will be used by Annotate and Disambiguate
+        final SpotlightFactory factory  = new SpotlightFactory(configuration);
+        setDisambiguators(factory.disambiguators());
+        setSpotters(factory.spotters());
+        setNamespacePrefix(configuration.getDbpediaResource());
+        setSparqlExecuter(configuration.getSparqlEndpoint(), configuration.getSparqlMainGraph());
+        setSimilarityThresholds(configuration.getSimilarityThresholds());
+
+    }
+
+    private static void initByModel(String folder) throws InitializationException {
+
+        File modelFolder = null;
+
+        try {
+            modelFolder = new File(folder);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("\n"+usage);
+            System.exit(1);
+        }
+
+
+        SpotlightModel db = SpotlightModel.fromFolder(modelFolder);
+
+        setNamespacePrefix(db.properties().getProperty("namespace"));
+        setTokenizer(db.tokenizer());
+        setSpotters(db.spotters());
+        setDisambiguators(db.disambiguators());
+        setSparqlExecuter(db.properties().getProperty("endpoint", ""),db.properties().getProperty("graph", ""));
+
     }
 }

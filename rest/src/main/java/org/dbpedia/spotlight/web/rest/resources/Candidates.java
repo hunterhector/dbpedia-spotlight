@@ -27,8 +27,10 @@ import org.dbpedia.spotlight.exceptions.InputException;
 import org.dbpedia.spotlight.exceptions.ItemNotFoundException;
 import org.dbpedia.spotlight.exceptions.SearchException;
 import org.dbpedia.spotlight.exceptions.SpottingException;
-import org.dbpedia.spotlight.filter.annotations.CombineAllAnnotationFilters;
 import org.dbpedia.spotlight.filter.annotations.FilterPolicy$;
+import org.dbpedia.spotlight.filter.visitor.FilterElement;
+import org.dbpedia.spotlight.filter.visitor.FilterOccsImpl;
+import org.dbpedia.spotlight.filter.visitor.OccsFilter;
 import org.dbpedia.spotlight.model.*;
 import org.dbpedia.spotlight.spot.Spotter;
 import org.dbpedia.spotlight.web.rest.Server;
@@ -69,10 +71,7 @@ public class Candidates {
     Log LOG = LogFactory.getLog(this.getClass());
 
     // Annotation interface
-    /**
-     * TODO Does not do any filtering at the moment!!!
-     */
-    public Annotation process(String text, double confidence, int support, List<OntologyType> ontologyTypes,
+    public Annotation process(String text, double confidence, int support, String ontologyTypesString,
                               String sparqlQuery, boolean blacklist, boolean coreferenceResolution, Spotter spotter, ParagraphDisambiguatorJ disambiguator)
             throws SearchException, ItemNotFoundException, InputException, SpottingException {
 
@@ -85,8 +84,7 @@ public class Candidates {
             Server.getTokenizer().tokenizeMaybe(textObject);
 
         List<SurfaceFormOccurrence> entityMentions = spotter.extract(textObject);
-        if (entityMentions.size()==0) return annotation; //nothing to di
-        // sambiguate
+        if (entityMentions.size()==0) return annotation; //nothing to disambiguate
         Paragraph paragraph = Factory.paragraph().fromJ(entityMentions);
         LOG.info(String.format("Spotted %d entity mentions.",entityMentions.size()));
 
@@ -95,11 +93,20 @@ public class Candidates {
 
         Enumeration.Value listColor = blacklist ? FilterPolicy$.MODULE$.Blacklist() : FilterPolicy$.MODULE$.Whitelist();
 
-        Map<SurfaceFormOccurrence,List<DBpediaResourceOccurrence>> filteredEntityCandidates = entityCandidates;
+        /*The previous addition of filter to the Candidates requests (which has usability questioned) produce the error described at issue #136.
+          To solve it, this feature for this argument (Candidates) is disabled, setting coreferenceResolution to false ever. Ignoring the user's configuration.
+        */
+        Boolean unableCoreferenceResolution = false;
+        FilterElement filter = new OccsFilter(confidence, support, ontologyTypesString, sparqlQuery, blacklist, unableCoreferenceResolution, Server.getSimilarityThresholds(), Server.getSparqlExecute());
 
-        if (Server.getCombinedFilters() != null) {
-            CombineAllAnnotationFilters filters = Server.getCombinedFilters();
-            filteredEntityCandidates = filters.filter(entityCandidates, confidence, support, ontologyTypes, sparqlQuery, listColor, coreferenceResolution);
+        Map<SurfaceFormOccurrence,List<DBpediaResourceOccurrence>> filteredEntityCandidates = new HashMap<SurfaceFormOccurrence,List<DBpediaResourceOccurrence>>();;
+
+        for (Map.Entry<SurfaceFormOccurrence,List<DBpediaResourceOccurrence>> entry : entityCandidates.entrySet())
+        {
+            List<DBpediaResourceOccurrence> result = filter.accept(new FilterOccsImpl() ,entry.getValue());
+
+            if (!result.isEmpty())
+                filteredEntityCandidates.put(entry.getKey(), result);
         }
 
         for(SurfaceFormOccurrence sfOcc : filteredEntityCandidates.keySet()) {
@@ -320,13 +327,6 @@ public class Candidates {
             throw new InputException("No text was specified in the &text parameter.");
         }
 
-        List<OntologyType> ontologyTypes = new ArrayList<OntologyType>();
-        String types[] = ontologyTypesString.trim().split(",");
-        for (String t : types){
-            if (!t.trim().equals("")) ontologyTypes.add(Factory.ontologyType().fromQName(t.trim()));
-            //LOG.info("type:"+t.trim());
-        }
-
         /* Setting defaults */
         if (Server.getTokenizer() == null && disambiguatorName==SpotlightConfiguration.DisambiguationPolicy.Default.name()
                 && text.length() > 1200) {
@@ -339,7 +339,7 @@ public class Candidates {
 
         /* Running Annotation */
 
-        Annotation annotation = process(text, confidence, support, ontologyTypes, sparqlQuery, blacklist, coreferenceResolution, spotter, disambiguator);
+        Annotation annotation = process(text, confidence, support, ontologyTypesString, sparqlQuery, blacklist, coreferenceResolution, spotter, disambiguator);
 
         LOG.debug("Shown: "+annotation.toXML());
         LOG.debug("****************************************************************");

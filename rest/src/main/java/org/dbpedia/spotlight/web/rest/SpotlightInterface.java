@@ -24,10 +24,13 @@ import org.dbpedia.spotlight.disambiguate.ParagraphDisambiguatorJ;
 import org.dbpedia.spotlight.exceptions.InputException;
 import org.dbpedia.spotlight.exceptions.SearchException;
 import org.dbpedia.spotlight.exceptions.SpottingException;
-import org.dbpedia.spotlight.filter.annotations.PercentageOfSecondFilter;
+import org.dbpedia.spotlight.filter.visitor.FilterElement;
+import org.dbpedia.spotlight.filter.visitor.FilterOccsImpl;
+import org.dbpedia.spotlight.filter.visitor.OccsFilter;
 import org.dbpedia.spotlight.model.*;
 import org.dbpedia.spotlight.spot.Spotter;
 
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,7 +40,7 @@ import java.util.List;
  *
  * @author maxjakob, pablomendes
  */
-public class SpotlightInterface  {
+public class SpotlightInterface {
 
     Log LOG = LogFactory.getLog(this.getClass());
 
@@ -153,18 +156,10 @@ public class SpotlightInterface  {
         ParagraphDisambiguatorJ disambiguator = Server.getDisambiguator(disambiguatorName);
         List<DBpediaResourceOccurrence> occList = disambiguate(spots, disambiguator);
 
-        // Filter: Old monolithic way
-        PercentageOfSecondFilter anotherFilter = new PercentageOfSecondFilter(confidence);
-        if (Server.getCombinedFilters() != null) {
-            // Linking / filtering
-            scala.collection.immutable.List<OntologyType> ontologyTypes = Factory.ontologyType().fromCSVString(ontologyTypesString);
-            occList = Server.getCombinedFilters().filter(occList, confidence, support, ontologyTypes, sparqlQuery, blacklist, coreferenceResolution);
-        }
+        FilterElement filter = new OccsFilter(confidence, support, ontologyTypesString, sparqlQuery, blacklist, coreferenceResolution, Server.getSimilarityThresholds(), Server.getSparqlExecute());
+        occList = filter.accept(new FilterOccsImpl() ,occList);
 
-        occList = anotherFilter.filterOccs(occList);
-        // Filter: TODO run occurrences through a list of annotation filters (which can be passed by parameter)
-        // Map<String,AnnotationFilter> annotationFilters = buildFilters(occList, confidence, support, dbpediaTypes, sparqlQuery, blacklist, coreferenceResolution);
-        //AnnotationFilter annotationFilter = annotationFilters.get(CombineAllAnnotationFilters.class.getSimpleName());
+
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Shown:");
@@ -274,25 +269,23 @@ public class SpotlightInterface  {
                          String disambiguator,
 			 String format,
 			 String prefix,
-			 String recipe,
-			 int ctxLength
-   ) throws Exception {
+			 String requestedURL) throws Exception {
         String result;
         String textToProcess = ServerUtils.getTextToProcess(text, inUrl);
 
-	// when no prefix argument specified and url param is used the prefix
-	// is set to the given url
-	if (prefix == null && !inUrl.equals(""))
-	    prefix = inUrl + "#";
-	// when no prefix argument specified and text param is used the prefix
-	// is set to the spotlight url + the given text
-	else if (prefix == null && !text.equals(""))
-	    prefix = "http://spotlight.dbpedia.org/rest/document/?text="+text+"#";
+	    // when no prefix argument specified and url param is used the prefix
+	    // is set to the given url
+	    if (prefix == null && !inUrl.equals(""))
+	        prefix = inUrl;
+	        // when no prefix argument specified and text param is used the prefix
+	        // is set to the spotlight url + the given text
+	    else if (prefix == null && !text.equals(""))
+	        prefix = requestedURL.concat("/?text=").concat(URLEncoder.encode(text, "UTF-8"));
 	
-	List<DBpediaResourceOccurrence> occs = getOccurrences(textToProcess, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution, clientIp, spotter,disambiguator);
-	result = outputManager.makeNIF(textToProcess, occs, format, prefix, recipe, ctxLength);
+	    List<DBpediaResourceOccurrence> occs = getOccurrences(textToProcess, confidence, support, dbpediaTypesString, sparqlQuery, policy, coreferenceResolution, clientIp, spotter,disambiguator);
+	    result = outputManager.makeNIF(textToProcess, occs, format, prefix);
 
-	LOG.info("NIF format: " + format);
+	    LOG.info("NIF format: " + format);
         LOG.debug("****************************************************************");
 
         return result;

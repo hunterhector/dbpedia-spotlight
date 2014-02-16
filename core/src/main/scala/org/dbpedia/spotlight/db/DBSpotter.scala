@@ -1,6 +1,6 @@
 package org.dbpedia.spotlight.db
 
-import model.{AnnotationTokenizer, SurfaceFormStore}
+import model.{TextTokenizer, SurfaceFormStore}
 import org.dbpedia.spotlight.spot.Spotter
 import breeze.linalg.DenseVector
 import org.dbpedia.spotlight.model._
@@ -18,7 +18,7 @@ abstract class DBSpotter(
  stopwords: Set[String]
 ) extends Spotter {
 
-  var tokenizer: AnnotationTokenizer = null
+  var tokenizer: TextTokenizer = null
 
   val uppercaseFinder = new RegexNameFinder(
     Array[Pattern](
@@ -41,7 +41,7 @@ abstract class DBSpotter(
       tokenizer.tokenizeMaybe(text)
 
     var spots = ListBuffer[SurfaceFormOccurrence]()
-    val sentences: List[List[Token]] = tokensToSentences(text.featureValue[List[Token]]("tokens").get)
+    val sentences: List[List[Token]] = DBSpotter.tokensToSentences(text.featureValue[List[Token]]("tokens").get)
 
     //Go through all sentences
     sentences.foreach{ sentence: List[Token] =>
@@ -56,22 +56,35 @@ abstract class DBSpotter(
           val firstToken = chunkSpan.getStart
           val lastToken = chunkSpan.getEnd-1
 
+          val tokenSeqs = ListBuffer[(Int, Int)]()
+
           //Taking away a left member in each step, look for the longest sub-chunk in the SF dictionary
-          (firstToken to lastToken).foreach(startToken => {
-            val startOffset: Int = sentence(startToken).offset
-            val endOffset: Int = sentence(lastToken).offset + sentence(lastToken).token.length
-            val spot = text.text.substring(startOffset, endOffset)
+          (firstToken to lastToken).foreach{ startToken =>
+            tokenSeqs += Pair(startToken, lastToken)
+          }
 
-            if (surfaceFormMatch(spot)) {
-              //The sub-chunk is in the dictionary, finish the processing of this chunk
-              val spotOcc = new SurfaceFormOccurrence(surfaceFormStore.getSurfaceForm(spot), text, startOffset, Provenance.Annotation, spotScore(spot))
-              spotOcc.setFeature(new Nominal("spot_type", chunkSpan.getType))
-              spotOcc.setFeature(new Feature("token_types", tokenTypes.slice(startToken, lastToken)))
-              spots += spotOcc
-              break()
+          //Then, do the same in the other direction:
+          (firstToken to lastToken).reverse.foreach{ endToken =>
+            tokenSeqs += Pair(firstToken, endToken)
+          }
+
+          tokenSeqs.foreach{
+            case (startToken: Int, endToken: Int) => {
+              val startOffset = sentence(startToken).offset
+              val endOffset = sentence(endToken).offset + sentence(endToken).token.length
+
+              val spot = text.text.substring(startOffset, endOffset)
+
+              if (surfaceFormMatch(spot)) {
+                //The sub-chunk is in the dictionary, finish the processing of this chunk
+                val spotOcc = new SurfaceFormOccurrence(surfaceFormStore.getSurfaceForm(spot), text, startOffset, Provenance.Annotation, spotScore(spot))
+                spotOcc.setFeature(new Nominal("spot_type", chunkSpan.getType))
+                spotOcc.setFeature(new Feature("token_types", tokenTypes.slice(startToken, lastToken)))
+                spots += spotOcc
+                break()
+              }
             }
-
-          })
+          }
         }
       })
     }
@@ -80,26 +93,6 @@ abstract class DBSpotter(
   }
 
 
-
-  def tokensToSentences(allTokens: List[Token]): List[List[Token]] = {
-
-    val sentences = ListBuffer[List[Token]]()
-    val sentence = ListBuffer[Token]()
-
-    allTokens foreach { token: Token =>
-      sentence.append(token)
-
-      token.feature("end-of-sentence") match {
-        case Some(b) => {
-          sentences.append(sentence.toList)
-          sentence.clear()
-        }
-        case None =>
-      }
-    }
-
-    sentences.toList
-  }
 
   private def spotScore(spot: String): Double = {
     try {
@@ -148,8 +141,15 @@ abstract class DBSpotter(
       if (lastSpot != null && lastSpot.intersects(spot)) {
 
         val spotHasBetterType = typeOrder.indexOf(spot.featureValue[String]("spot_type")) < typeOrder.indexOf(lastSpot.featureValue[String]("spot_type"))
+        val spotIsLonger = spot.surfaceForm.name.length > lastSpot.surfaceForm.name.length
 
-        if(spot.spotProb == lastSpot.spotProb && spotHasBetterType) {
+        if(spotIsLonger && spot.spotProb > lastSpot.spotProb/2.0) {
+          remove += i-1
+          lastSpot = spot
+        } else if(!spotIsLonger && !(spot.spotProb > lastSpot.spotProb*2.0)) {
+          remove += i
+          lastSpot = lastSpot
+        } else if(spot.spotProb == lastSpot.spotProb && spotHasBetterType) {
           remove += i-1
           lastSpot = spot
         } else if (spot.spotProb == lastSpot.spotProb && !spotHasBetterType) {
@@ -196,4 +196,23 @@ object DBSpotter {
       1.0
     )
 
+  def tokensToSentences(allTokens: List[Token]): List[List[Token]] = {
+
+    val sentences = ListBuffer[List[Token]]()
+    val sentence = ListBuffer[Token]()
+
+    allTokens foreach { token: Token =>
+      sentence.append(token)
+
+      token.feature("end-of-sentence") match {
+        case Some(b) => {
+          sentences.append(sentence.toList)
+          sentence.clear()
+        }
+        case None =>
+      }
+    }
+
+    sentences.toList
+  }
 }

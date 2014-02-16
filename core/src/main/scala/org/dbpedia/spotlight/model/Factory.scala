@@ -26,12 +26,12 @@ import org.dbpedia.spotlight.lucene.LuceneManager.DBpediaResourceField
 import collection.JavaConversions._
 import org.dbpedia.spotlight.lucene.search.{LuceneCandidateSearcher, BaseSearcher}
 import org.dbpedia.spotlight.exceptions.{ItemNotFoundException, ConfigurationException}
-import org.apache.commons.logging.LogFactory
+import org.dbpedia.spotlight.log.SpotlightLog
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.dbpedia.spotlight.lucene.similarity.{CachedInvCandFreqSimilarity, JCSTermCache, InvCandFreqSimilarity}
 import org.apache.lucene.misc.SweetSpotSimilarity
 import org.apache.lucene.search.{DefaultSimilarity, ScoreDoc, Similarity}
-import scalaj.collection.Imports._
+import scala.collection.JavaConverters._
 import org.dbpedia.spotlight.spot.{SpotSelector, AtLeastOneNounSelector, ShortSurfaceFormSelector}
 import java.io.File
 import org.dbpedia.extraction.util.WikiUtil
@@ -43,7 +43,6 @@ import org.dbpedia.extraction.util.WikiUtil
  * @author Joachim Daiber (Tagger and Spotter methods)
  */
 object Factory {
-    private val LOG = LogFactory.getLog(this.getClass)
     /*
     * I like this style for the factory. group by return type and offer many .from* methods
     */
@@ -72,7 +71,7 @@ object Factory {
 
     object DBpediaResourceOccurrence {
         def from(sfOcc: SurfaceFormOccurrence, resource: DBpediaResource, score: Double) = {
-            LOG.debug("Factory test: support=%s, ctxScore=%s, sfOcc=%s".format(resource.support, score, sfOcc));
+            SpotlightLog.debug(this.getClass, "Factory test: support=%s, ctxScore=%s, sfOcc=%s", resource.support, score, sfOcc)
             new DBpediaResourceOccurrence("",  // there is no way to know this here
                 resource,
                 sfOcc.surfaceForm,
@@ -120,15 +119,19 @@ object Factory {
     object OntologyType {
 
         def fromURI(uri: String) : OntologyType = {
-            if (uri.startsWith(DBpediaType.DBPEDIA_ONTOLOGY_PREFIX)) {
-                new DBpediaType(uri)
-            } else if (uri.startsWith(FreebaseType.FREEBASE_RDF_PREFIX)) {
-                FreebaseType.fromTypeString(uri)
-            } else if (uri.startsWith(SchemaOrgType.SCHEMAORG_PREFIX)) {
-                new SchemaOrgType(uri)
-            } else {
-                new DBpediaType(uri)
-            }
+            if (uri.startsWith(DBpediaType.DBPEDIA_ONTOLOGY_PREFIX))
+                return new DBpediaType(uri)
+
+            if (uri.startsWith(FreebaseType.FREEBASE_RDF_PREFIX))
+                return FreebaseType.fromTypeString(uri)
+
+            if (uri.startsWith(SchemaOrgType.SCHEMAORG_PREFIX))
+                return new SchemaOrgType(uri)
+
+            if (uri.startsWith(OpenCycConcept.OPENCYCCONCEPT_PREFIX))
+                return new OpenCycConcept(uri)
+
+            new DBpediaType(uri)
         }
 
         def fromQName(ontologyType : String) : OntologyType = {
@@ -143,6 +146,7 @@ object Factory {
                             case "d" | "dbpedia"  => new DBpediaType(suffix)
                             case "f" | "freebase" => FreebaseType.fromTypeString(suffix)
                             case "s" | "schema" => new SchemaOrgType(suffix)
+                            case "o" | "opencyc" => new OpenCycConcept(suffix)
                             case _ => new DBpediaType(ontologyType)
                         }
                     }
@@ -185,7 +189,7 @@ object Factory {
     object Analyzer {
 
       def defaultAnalyzer(stopWords: java.util.Set[String]) :Analyzer = {
-        LOG.warn("Using Lucene StandardAnalyzer/ Version.LUCENE_36 by default...")
+        SpotlightLog.warn(this.getClass, "Using Lucene StandardAnalyzer/ Version.LUCENE_36 by default...")
         new StandardAnalyzer(Version.LUCENE_36,stopWords)
       }
 
@@ -204,32 +208,32 @@ object Factory {
         catch {
 
           case cnfe: ClassNotFoundException => {
-            LOG.error("I can't find a class with the name " + analyzerName +" or lucene version "+ luceneVersion)
-            LOG.error("Try to use in org.dbpedia.spotlight.lucene.analyzer property a complete name, such :")
-            LOG.error(" - org.apache.lucene.analysis.de.GermanAnalyzer for German;")
-            LOG.error(" - org.apache.lucene.analysis.fr.FrenchAnalyzer for French;")
-            LOG.error(" - org.apache.lucene.analysis.br.BrazilianAnalyzer for Brazilian Portuguese;")
-            LOG.error("etc...")
-            LOG.error("For org.dbpedia.spotlight.lucene.version property, try to use such:")
-            LOG.error(" - LUCENE_36 - Lucene Version 3.6")
+            SpotlightLog.error(this.getClass, "I can't find a class with the name %s or lucene version %s", analyzerName, luceneVersion)
+            SpotlightLog.error(this.getClass, "Try to use in org.dbpedia.spotlight.lucene.analyzer property a complete name, such :")
+            SpotlightLog.error(this.getClass, " - org.apache.lucene.analysis.de.GermanAnalyzer for German;")
+            SpotlightLog.error(this.getClass, " - org.apache.lucene.analysis.fr.FrenchAnalyzer for French;")
+            SpotlightLog.error(this.getClass, " - org.apache.lucene.analysis.br.BrazilianAnalyzer for Brazilian Portuguese;")
+            SpotlightLog.error(this.getClass, "etc...")
+            SpotlightLog.error(this.getClass, "For org.dbpedia.spotlight.lucene.version property, try to use such:")
+            SpotlightLog.error(this.getClass, " - LUCENE_36 - Lucene Version 3.6")
 
             defaultAnalyzer(stopWords)
 
           }
 
           case cce: ClassCastException => {
-            LOG.error("I found a class with the name " + analyzerName + ", but this class isn't an Analyzer class.")
-            LOG.error("Please check org.dbpedia.spotlight.lucene.analyzer and org.dbpedia.spotlight.lucene.version " +
+            SpotlightLog.error(this.getClass, "I found a class with the name %s, but this class isn't an Analyzer class.", analyzerName)
+            SpotlightLog.error(this.getClass, "Please check org.dbpedia.spotlight.lucene.analyzer and org.dbpedia.spotlight.lucene.version " +
               "properties in your server.properties file.")
             defaultAnalyzer(stopWords)
 
           }
           case e: Exception => {
-            LOG.error("Something went wrong. Please check your server.properties file.")
-            LOG.error("If the problem persists, please send the stacktrace below to the dev team.")
-            LOG.error("[BOF]*************************Stacktrace error:*************************")
+            SpotlightLog.error(this.getClass, "Something went wrong. Please check your server.properties file.")
+            SpotlightLog.error(this.getClass, "If the problem persists, please send the stacktrace below to the dev team.")
+            SpotlightLog.error(this.getClass, "[BOF]*************************Stacktrace error:*************************")
             e.printStackTrace()
-            LOG.error("[EOF]*************************Stacktrace error:*************************")
+            SpotlightLog.error(this.getClass, "[EOF]*************************Stacktrace error:*************************")
             defaultAnalyzer(stopWords)
 
           }
@@ -325,7 +329,7 @@ object Factory {
             var candLuceneManager : LuceneManager = new LuceneManager(candidateIndexDir)
             candLuceneManager.setDBpediaResourceFactory(configuration.getDBpediaResourceFactory)
             val candidateSearcher = new LuceneCandidateSearcher(candLuceneManager,inMemory)
-            LOG.info("CandidateSearcher initiated (inMemory=%s) from %s".format(candidateIndexDir,inMemory))
+            SpotlightLog.info(this.getClass, "CandidateSearcher initiated (inMemory=%s) from %s", candidateIndexDir,inMemory)
             candidateSearcher
         }
     }

@@ -18,20 +18,21 @@
 
 package org.dbpedia.spotlight.filter.annotations
 
-import org.apache.commons.logging.LogFactory
+import org.dbpedia.spotlight.log.SpotlightLog
 import org.dbpedia.spotlight.model.{DBpediaResource, DBpediaResourceOccurrence}
 import org.dbpedia.spotlight.sparql.SparqlQueryExecuter
-import scalaj.collection.Imports._
+import org.dbpedia.spotlight.filter.visitor.{FilterOccsVisitor, FilterElement}
+import scala.collection.JavaConverters._
+import java.util
+import scala.collection.JavaConversions._
 
 
-class SparqlFilter(val executer : SparqlQueryExecuter, val sparqlQuery: String, val listColor : FilterPolicy.ListColor) extends AnnotationFilter  {
-
-    private val LOG = LogFactory.getLog(this.getClass)
+class SparqlFilter(val executer : SparqlQueryExecuter, val sparqlQuery: String, val listColor : FilterPolicy.ListColor) extends AnnotationFilter with FilterElement  {
 
     val uriSet =
         if(sparqlQuery != null && sparqlQuery != "") {
             val s = executer.query(sparqlQuery).asScala.map( r => r.uri ).toSet
-            LOG.debug("SPARQL "+listColor+":"+s)
+            SpotlightLog.debug(this.getClass, "SPARQL %s:%s", listColor, s)
             s
         }
         else {
@@ -51,9 +52,13 @@ class SparqlFilter(val executer : SparqlQueryExecuter, val sparqlQuery: String, 
             Some(occ)
         }
         else {
-            LOG.info("filtered out by SPARQL "+listColor+": "+occ.resource)
+            SpotlightLog.info(this.getClass, "filtered out by SPARQL %s:%s ", listColor, occ.resource)
             None
         }
     }
+
+  def accept(visitor: FilterOccsVisitor, occs: util.List[DBpediaResourceOccurrence]): java.util.List[DBpediaResourceOccurrence]= {
+    visitor.visit(this, occs)
+  }
 
 }

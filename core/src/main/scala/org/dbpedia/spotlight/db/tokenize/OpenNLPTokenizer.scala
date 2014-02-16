@@ -17,7 +17,7 @@ class OpenNLPTokenizer(
   sentenceDetector: SentenceDetector,
   var posTagger: POSTagger,
   tokenTypeStore: TokenTypeStore
-) extends BaseAnnotationTokenizer(tokenTypeStore, stemmer) {
+) extends BaseTextTokenizer(tokenTypeStore, stemmer) {
 
   def tokenize(text: Text): List[Token] = this.synchronized {
     sentenceDetector.sentPosDetect(text.text).map{ sentencePos: Span =>
@@ -46,14 +46,14 @@ class OpenNLPTokenizer(
     }.flatten.toList
   }
 
-  def getRawTokenizer: BaseRawTokenizer = new OpenNLPRawTokenizer(tokenizer, stemmer)
+  def getStringTokenizer: BaseStringTokenizer = new OpenNLPStringTokenizer(tokenizer, stemmer)
 
 }
 
-class OpenNLPRawTokenizer(tokenizer: opennlp.tools.tokenize.Tokenizer, stemmer: Stemmer) extends BaseRawTokenizer(stemmer) {
+class OpenNLPStringTokenizer(tokenizer: opennlp.tools.tokenize.Tokenizer, stemmer: Stemmer) extends BaseStringTokenizer(stemmer) {
 
-  def tokenizeUnstemmed(text: String): Seq[String] = tokenizer.tokenize(text)
+  def tokenizeUnstemmed(text: String): Seq[String] = this.synchronized{ tokenizer.tokenize(text) }
 
-  def tokenizePos(text: String): Array[Span] = tokenizer.tokenizePos(text)
+  def tokenizePos(text: String): Array[Span] = this.synchronized{ tokenizer.tokenizePos(text) }
 
 }

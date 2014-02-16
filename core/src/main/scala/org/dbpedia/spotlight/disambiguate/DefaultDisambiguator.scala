@@ -21,12 +21,12 @@ import org.dbpedia.spotlight.lucene.LuceneManager
 import org.dbpedia.spotlight.lucene.search.MergedOccurrencesContextSearcher
 import java.io.File
 import org.dbpedia.spotlight.lucene.similarity._
-import org.apache.commons.logging.LogFactory
+import org.dbpedia.spotlight.log.SpotlightLog
 import org.apache.lucene.search.Explanation
 import org.dbpedia.spotlight.model._
 import org.dbpedia.spotlight.lucene.disambiguate.{MixedWeightsDisambiguator, MergedOccurrencesDisambiguator}
 import org.dbpedia.spotlight.exceptions.{ItemNotFoundException, SearchException, InputException}
-import scalaj.collection.Imports._
+import scala.collection.JavaConverters._
 import scala.collection.JavaConversions._
 
 /**
@@ -40,13 +40,11 @@ import scala.collection.JavaConversions._
  */
 class DefaultDisambiguator(val contextSearcher: ContextSearcher) extends Disambiguator with ParagraphDisambiguator  {
 
-    private val LOG = LogFactory.getLog(this.getClass)
-
-    LOG.info("Initializing disambiguator object ...")
+    SpotlightLog.info(this.getClass, "Initializing disambiguator object ...")
 
     val disambiguator : Disambiguator = new MergedOccurrencesDisambiguator(contextSearcher)
 
-    LOG.info("Done.")
+    SpotlightLog.info(this.getClass, "Done.")
 
     def disambiguate(sfOccurrence: SurfaceFormOccurrence): DBpediaResourceOccurrence = {
         disambiguator.disambiguate(sfOccurrence)
@@ -78,7 +76,6 @@ class DefaultDisambiguator(val contextSearcher: ContextSearcher) extends Disambi
      * Executes disambiguation per occurrence, returns a list of possible candidates.
      * Can be seen as a ranking (rather than classification) task: query instance in, ranked list of target URIs out.
      *
-     * @param sfOccurrences
      * @param k
      * @return
      * @throws org.dbpedia.spotlight.exceptions.SearchException

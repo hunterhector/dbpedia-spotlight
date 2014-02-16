@@ -18,9 +18,9 @@ class LanguageIndependentTokenizer(
   stemmer: Stemmer,
   locale: Locale,
   var tokenTypeStore: TokenTypeStore
-) extends BaseAnnotationTokenizer(tokenTypeStore, stemmer) {
+) extends BaseTextTokenizer(tokenTypeStore, stemmer) {
 
-  def getRawTokenizer: BaseRawTokenizer = new LanguageIndependentRawTokenizer(locale, stemmer)
+  def getStringTokenizer: BaseStringTokenizer = new LanguageIndependentStringTokenizer(locale, stemmer)
 
   def tokenize(text: Text): List[Token] = {
 
@@ -47,7 +47,7 @@ class LanguageIndependentTokenizer(
   }
 }
 
-class LanguageIndependentRawTokenizer(locale: Locale, stemmer: Stemmer) extends BaseRawTokenizer(stemmer) {
+class LanguageIndependentStringTokenizer(locale: Locale, stemmer: Stemmer) extends BaseStringTokenizer(stemmer) {
 
   def tokenizeUnstemmed(text: String): Seq[String] = {
     Helper.tokenizeWords(locale, text).map{ s: Span =>
@@ -62,6 +62,21 @@ class LanguageIndependentRawTokenizer(locale: Locale, stemmer: Stemmer) extends 
 
 object Helper {
 
+  val normalizations = Map[String, List[(String, String)]](
+    "fr" -> List( ("([dDlL])[’']", "$1 ") ), //French def. and indef. article
+    "it" -> List( ("([lL]|[uU]n)[’']", "$1 ") ) //Italian def. and indef. article
+  )
+
+  def normalize(locale: Locale, text: String): String = {
+    var normalizedText = text
+
+    normalizations.get(locale.getLanguage).getOrElse(List.empty).foreach{ n: Pair[String, String] =>
+      normalizedText = normalizedText.replaceAll(n._1, n._2)
+    }
+
+    normalizedText
+  }
+
   def tokenizeWords(locale: Locale, text: String): Array[Span] =
     tokenizeString(locale, BreakIterator.getWordInstance(locale), text)
 
@@ -69,15 +84,15 @@ object Helper {
     tokenizeString(locale, BreakIterator.getSentenceInstance(locale), text)
 
   def tokenizeString(locale: Locale, it: BreakIterator, text: String): Array[Span] = {
-    it.setText(text)
-
+    val normalizedText = normalize(locale, text)
+    it.setText( normalizedText )
     var spans = ArrayBuffer[Span]()
 
     var start = it.first()
     var end = it.next()
 
     while (end != BreakIterator.DONE) {
-      if (!Character.isWhitespace(text.charAt(start)))
+      if (!Character.isWhitespace(normalizedText.charAt(start)))
         spans += new Span(start, end)
 
       start = end

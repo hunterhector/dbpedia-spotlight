@@ -17,21 +17,25 @@
 package org.dbpedia.spotlight.filter.annotations
 
 import org.dbpedia.spotlight.model.DBpediaResourceOccurrence
-import org.apache.commons.logging.LogFactory
+import org.dbpedia.spotlight.log.SpotlightLog
+import org.dbpedia.spotlight.filter.visitor.{FilterOccsVisitor, FilterElement}
+import java.util
+import scala.collection.JavaConversions._
 
 
-class SupportFilter(val targetSupport : Int) extends AnnotationFilter  {
-
-    private val LOG = LogFactory.getLog(this.getClass)
+class SupportFilter(val targetSupport : Int) extends AnnotationFilter with FilterElement  {
 
     override def touchOcc(occ : DBpediaResourceOccurrence) : Option[DBpediaResourceOccurrence] = {
         if (occ.resource.support > targetSupport) {
             Some(occ)
         }
         else{
-            LOG.info("filtered out by support ("+occ.resource.support+"<"+targetSupport+"): "+occ)
+            SpotlightLog.info(this.getClass, "filtered out by support (%d<%d): %s", occ.resource.support, targetSupport, occ)
             None
         }
     }
 
+  def accept(visitor: FilterOccsVisitor, occs: util.List[DBpediaResourceOccurrence]): java.util.List[DBpediaResourceOccurrence]= {
+    visitor.visit(this, occs)
+  }
 }

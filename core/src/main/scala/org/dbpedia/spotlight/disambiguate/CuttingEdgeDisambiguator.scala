@@ -17,12 +17,12 @@ package org.dbpedia.spotlight.disambiguate
  */
 
 import mixtures.LinearRegressionMixture
-import org.apache.commons.logging.LogFactory
+import org.dbpedia.spotlight.log.SpotlightLog
 import org.dbpedia.spotlight.exceptions.{SearchException, InputException}
 import org.apache.lucene.search.Explanation
 import org.dbpedia.spotlight.model._
 import org.dbpedia.spotlight.lucene.disambiguate.MixedWeightsDisambiguator
-import scalaj.collection.Imports._
+import scala.collection.JavaConverters._
 
 /**
  * Implementation used for evaluation runs. Will change as new scores/implementations come in.
@@ -31,15 +31,13 @@ import scalaj.collection.Imports._
  */
 class CuttingEdgeDisambiguator(val contextSearcher: ContextSearcher) extends Disambiguator with ParagraphDisambiguator {
 
-    private val LOG = LogFactory.getLog(this.getClass)
-
-    LOG.info("Initializing disambiguator object ...")
+    SpotlightLog.info(this.getClass, "Initializing disambiguator object ...")
     val disambiguator : Disambiguator = new MixedWeightsDisambiguator(contextSearcher, new LinearRegressionMixture())
 
     //TODO fix MultiThreading
     //val disambiguator : Disambiguator = new MultiThreadedDisambiguatorWrapper(new MixedWeightsDisambiguator(contextSearcher, new LinearRegressionMixture()))
 
-    LOG.info("Done.")
+    SpotlightLog.info(this.getClass, "Done.")
 
     def disambiguate(sfOccurrence: SurfaceFormOccurrence): DBpediaResourceOccurrence = {
         disambiguator.disambiguate(sfOccurrence)
@@ -68,7 +66,7 @@ class CuttingEdgeDisambiguator(val contextSearcher: ContextSearcher) extends Dis
                 acc + (o -> bestK(o,k).asScala.toList)
             } catch {
                 case e: Exception => {
-                    LOG.debug("Exception: "+e.getMessage)
+                    SpotlightLog.debug(this.getClass, "Exception: %s", e.getMessage)
                     //e.printStackTrace()
                     acc
                 }
