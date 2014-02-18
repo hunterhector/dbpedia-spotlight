@@ -53,7 +53,7 @@ object FileOccurrenceSource
         val outStream = new PrintStream(o, true, "UTF-8")
 
 
-      SpotlightLog.debug("Preparing to iterate the occs")
+      SpotlightLog.debug(this.getClass,"Preparing to iterate the occs")
         for (occ <- occSource) {
             outStream.println(occ.toTsvString)
 
