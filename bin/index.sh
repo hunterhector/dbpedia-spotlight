@@ -1,3 +1,4 @@
+#!/bin/sh
 # You are expected to run the commands in this script from inside the bin directory in your DBpedia Spotlight installation
 # Adjust the paths here if you don't. This script is meant more as a step-by-step guidance than a real automated run-all.
 # If this is your first time running the script, we advise you to copy/paste commands from here, closely watching the messages
