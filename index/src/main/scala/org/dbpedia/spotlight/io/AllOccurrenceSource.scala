@@ -24,6 +24,7 @@ import org.dbpedia.spotlight.log.SpotlightLog
 import java.io.File
 import xml.{XML, Elem}
 import org.dbpedia.extraction.util.Language
+import java.lang.reflect.InvocationTargetException
 
 /**
  * Loads Occurrences from a wiki dump.
@@ -144,6 +145,7 @@ object AllOccurrenceSource
         } catch {
           case e: Exception => SpotlightLog.info(this.getClass, "Skipping invalid page.")
           case e: NoSuchElementException => SpotlightLog.info(this.getClass, "Skipping invalid page.")
+          case e: InvocationTargetException => SpotlightLog.info(this.getClass, "Skipping invalid page.")
           case _ => SpotlightLog.info(this.getClass, "Skipping invalid page.")
         }
 
