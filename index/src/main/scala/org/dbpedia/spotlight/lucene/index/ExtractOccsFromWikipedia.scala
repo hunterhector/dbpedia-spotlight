@@ -90,15 +90,15 @@ object ExtractOccsFromWikipedia {
     val minContextWindowSize  = config.get("org.dbpedia.spotlight.data.minContextWindowSize").toInt
     val languageCode = config.get("org.dbpedia.spotlight.language_i18n_code")
 
-    SpotlightLog.info(this.getClass, "Fixing invalid namespaces in the input dump %s ...", wikiDumpFileName)
-    fixNamespaceError(wikiDumpFileName)
-    SpotlightLog.info(this.getClass, "Done.")
-
     if (wikiDumpFileName.endsWith(".bz2")) {
       SpotlightLog.warn(this.getClass, "The DBpedia Extraction Framework does not support parsing from bz2 files. You can stop here, decompress and restart the process with an uncompressed XML.")
       SpotlightLog.warn(this.getClass, "If you do not stop the process, we will decompress the file into the /tmp/ directory for you.")
       wikiDumpFileName = BzipUtils.extract(wikiDumpFileName)
     }
+
+    SpotlightLog.info(this.getClass, "Fixing invalid namespaces in the input dump %s ...", wikiDumpFileName)
+    fixNamespaceError(wikiDumpFileName)
+    SpotlightLog.info(this.getClass, "Done.")
 
     val conceptUriFilter = UriWhitelistFilter.fromFile(new File(conceptURIsFileName))
 
