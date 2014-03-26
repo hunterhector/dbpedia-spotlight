@@ -47,7 +47,7 @@ object ExtractOccsFromWikipedia {
   def fixNamespaceError(pathToDumpFile: String) {
     val pattern = new Regex("""<ns>(\w*)</ns>""", "nameSpace")
     val fixedOccsStream = new PrintStream(pathToDumpFile + "_tmp", "UTF-8")
-    val source = Source.fromFile(new File(pathToDumpFile))
+    val source = Source.fromFile(new File(pathToDumpFile,"UTF-8"))
     var i = 0
     for (line <- source.getLines()) {
       try {
