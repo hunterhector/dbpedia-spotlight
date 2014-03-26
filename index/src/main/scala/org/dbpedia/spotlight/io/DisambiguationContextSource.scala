@@ -65,7 +65,8 @@ object DisambiguationContextSource
     }
 
     def wikiPageCopy(wikiPage: WikiPage, newSource: String) = {
-        new WikiPage(wikiPage.title, wikiPage.redirect, wikiPage.id, wikiPage.revision, wikiPage.timestamp, newSource)
+      WikiPageUtil.copyWikiPage(wikiPage,newSource)
+//      new WikiPage(wikiPage.title, wikiPage.redirect, wikiPage.id, wikiPage.revision, wikiPage.timestamp, newSource)
     }
 
     /**

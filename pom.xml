@@ -377,7 +377,7 @@
             <dependency>
                 <groupId>org.dbpedia.extraction</groupId>
                 <artifactId>core</artifactId>
-                <version>3.9</version>
+                <version>3.8</version>
                 <!--
                     License: Apache Software License, Version 2.0
                 -->
@@ -1082,6 +1082,17 @@
             <url>https://github.com/dbpedia-spotlight/maven-repo/raw/master/snapshots</url>
         </repository>
 
+        <repository>
+            <id>maven.aksw.internal</id>
+            <name>University Leipzig, AKSW Maven2 Repository</name>
+            <url>http://maven.aksw.org/archiva/repository/internal</url>
+        </repository>
+
+        <repository>
+            <id>maven.aksw.snapshots</id>
+            <name>University Leipzig, AKSW Maven2 Repository</name>
+            <url>http://maven.aksw.org/archiva/repository/snapshots</url>
+        </repository>
 
     </repositories>
 
