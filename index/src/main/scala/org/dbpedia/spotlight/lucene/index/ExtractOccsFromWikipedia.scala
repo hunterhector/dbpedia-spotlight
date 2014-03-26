@@ -18,7 +18,7 @@
 
 package org.dbpedia.spotlight.lucene.index
 
-import java.io.File
+import java.io.{PrintStream, File}
 import org.dbpedia.spotlight.log.SpotlightLog
 import org.dbpedia.spotlight.string.ContextExtractor
 import org.dbpedia.spotlight.util.IndexingConfiguration
@@ -27,6 +27,8 @@ import org.dbpedia.spotlight.io._
 import org.dbpedia.spotlight.model.DBpediaResourceOccurrence
 import org.dbpedia.spotlight.BzipUtils
 import org.dbpedia.extraction.util.Language
+import scala.util.matching.Regex
+import io.Source
 
 /**
  * Saves Occurrences to a TSV file.
@@ -42,44 +44,75 @@ import org.dbpedia.extraction.util.Language
  * @author pablomendes (small fixes)
  */
 object ExtractOccsFromWikipedia {
-
-    def main(args : Array[String]) {
-        val indexingConfigFileName = args(0)
-        val targetFileName = args(1)
-
-        val config = new IndexingConfiguration(indexingConfigFileName)
-        var wikiDumpFileName    = config.get("org.dbpedia.spotlight.data.wikipediaDump")
-        val conceptURIsFileName = config.get("org.dbpedia.spotlight.data.conceptURIs")
-        val redirectTCFileName  = config.get("org.dbpedia.spotlight.data.redirectsTC")
-        val maxContextWindowSize  = config.get("org.dbpedia.spotlight.data.maxContextWindowSize").toInt
-        val minContextWindowSize  = config.get("org.dbpedia.spotlight.data.minContextWindowSize").toInt
-        val languageCode = config.get("org.dbpedia.spotlight.language_i18n_code")
-
-
-        if (wikiDumpFileName.endsWith(".bz2")) {
-            SpotlightLog.warn(this.getClass, "The DBpedia Extraction Framework does not support parsing from bz2 files. You can stop here, decompress and restart the process with an uncompressed XML.")
-            SpotlightLog.warn(this.getClass, "If you do not stop the process, we will decompress the file into the /tmp/ directory for you.")
-            wikiDumpFileName = BzipUtils.extract(wikiDumpFileName)
+  def fixNamespaceError(pathToDumpFile: String) {
+    val pattern = new Regex("""<ns>(\w*)</ns>""", "nameSpace")
+    val fixedOccsStream = new PrintStream(pathToDumpFile + "_tmp", "UTF-8")
+    val source = Source.fromFile(new File(pathToDumpFile))
+    var i = 0
+    for (line <- source.getLines()) {
+      try {
+        if (i % 100000 == 0) SpotlightLog.info(this.getClass, "%s lines processed.", i.toString)
+        i += 1
+        val badNS = pattern.findFirstMatchIn(line.toString).get.group("nameSpace")
+        if (badNS != null) {
+          if (badNS.toInt == 828) {
+            fixedOccsStream.println(line.replace("828","0"))
+          } else {
+            fixedOccsStream.println(line)
+          }
         }
-
-        val conceptUriFilter = UriWhitelistFilter.fromFile(new File(conceptURIsFileName))
-
-        val redirectResolver = RedirectResolveFilter.fromFile(new File(redirectTCFileName))
-
-        val narrowContext = new ContextExtractor(minContextWindowSize, maxContextWindowSize)
-        val contextNarrowFilter = new ContextNarrowFilter(narrowContext)
-
-        val filters = (conceptUriFilter :: redirectResolver :: contextNarrowFilter :: Nil)
-
-        val occSource : Traversable[DBpediaResourceOccurrence] = AllOccurrenceSource.fromXMLDumpFile(new File(wikiDumpFileName), Language(languageCode))
-        //val filter = new OccurrenceFilter(redirectsTC = redirectsTCMap, conceptURIs = conceptUrisSet, contextExtractor = narrowContext)
-        //val occs = filter.filter(occSource)
-
-        val occs = filters.foldLeft(occSource){ (o,f) => f.filterOccs(o) }
-
-        FileOccurrenceSource.writeToFile(occs, new File(targetFileName))
-
-        SpotlightLog.info(this.getClass, "Occurrences saved to: %s", targetFileName)
-
+      } catch {
+        case e: Exception => fixedOccsStream.println(line)
+        case _ => fixedOccsStream.println(line)
+      }
     }
+    source.close()
+    fixedOccsStream.close()
+    val aFile = new File(pathToDumpFile)
+    aFile.delete()
+    val aTmpFile = new File(pathToDumpFile + "_tmp")
+    aTmpFile.renameTo(new File(pathToDumpFile))
+  }
+
+  def main(args : Array[String]) {
+    val indexingConfigFileName = args(0)
+    val targetFileName = args(1)
+
+    val config = new IndexingConfiguration(indexingConfigFileName)
+    var wikiDumpFileName    = config.get("org.dbpedia.spotlight.data.wikipediaDump")
+    val conceptURIsFileName = config.get("org.dbpedia.spotlight.data.conceptURIs")
+    val redirectTCFileName  = config.get("org.dbpedia.spotlight.data.redirectsTC")
+    val maxContextWindowSize  = config.get("org.dbpedia.spotlight.data.maxContextWindowSize").toInt
+    val minContextWindowSize  = config.get("org.dbpedia.spotlight.data.minContextWindowSize").toInt
+    val languageCode = config.get("org.dbpedia.spotlight.language_i18n_code")
+
+    SpotlightLog.info(this.getClass, "Fixing invalid namespaces in the input dump %s ...", wikiDumpFileName)
+    //fixNamespaceError(wikiDumpFileName)
+    SpotlightLog.info(this.getClass, "Done.")
+
+    if (wikiDumpFileName.endsWith(".bz2")) {
+      SpotlightLog.warn(this.getClass, "The DBpedia Extraction Framework does not support parsing from bz2 files. You can stop here, decompress and restart the process with an uncompressed XML.")
+      SpotlightLog.warn(this.getClass, "If you do not stop the process, we will decompress the file into the /tmp/ directory for you.")
+      wikiDumpFileName = BzipUtils.extract(wikiDumpFileName)
+    }
+
+    val conceptUriFilter = UriWhitelistFilter.fromFile(new File(conceptURIsFileName))
+
+    val redirectResolver = RedirectResolveFilter.fromFile(new File(redirectTCFileName))
+
+    val narrowContext = new ContextExtractor(minContextWindowSize, maxContextWindowSize)
+    val contextNarrowFilter = new ContextNarrowFilter(narrowContext)
+
+    val filters = (conceptUriFilter :: redirectResolver :: contextNarrowFilter :: Nil)
+
+    val occSource : Traversable[DBpediaResourceOccurrence] = AllOccurrenceSource.fromXMLDumpFile(new File(wikiDumpFileName), Language(languageCode))
+    //val filter = new OccurrenceFilter(redirectsTC = redirectsTCMap, conceptURIs = conceptUrisSet, contextExtractor = narrowContext)
+    //val occs = filter.filter(occSource)
+
+    val occs = filters.foldLeft(occSource){ (o,f) => f.filterOccs(o) }
+
+    FileOccurrenceSource.writeToFile(occs, new File(targetFileName))
+
+    SpotlightLog.info(this.getClass, "Occurrences saved to: %s", targetFileName)
+  }
 }
