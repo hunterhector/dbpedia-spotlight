@@ -55,9 +55,13 @@ object ExtractOccsFromWikipedia {
         i += 1
         val badNS = pattern.findFirstMatchIn(line.toString).get.group("nameSpace")
         if (badNS != null) {
-          if (badNS.toInt == 828) {
+          if (badNS.toInt == 828 ) {
             fixedOccsStream.println(line.replace("828","0"))
-          } else {
+          }else if (badNS.toInt == 118  ){
+            fixedOccsStream.println(line.replace("118","0"))
+          }else if(badNS.toInt == 119){
+            fixedOccsStream.println(line.replace("119","0"))
+          }else {
             fixedOccsStream.println(line)
           }
         }
@@ -87,7 +91,7 @@ object ExtractOccsFromWikipedia {
     val languageCode = config.get("org.dbpedia.spotlight.language_i18n_code")
 
     SpotlightLog.info(this.getClass, "Fixing invalid namespaces in the input dump %s ...", wikiDumpFileName)
-    //fixNamespaceError(wikiDumpFileName)
+    fixNamespaceError(wikiDumpFileName)
     SpotlightLog.info(this.getClass, "Done.")
 
     if (wikiDumpFileName.endsWith(".bz2")) {
