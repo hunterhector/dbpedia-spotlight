@@ -245,6 +245,12 @@
             <artifactId>jackson-core-asl</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.code.externalsortinginjava</groupId>
+            <artifactId>externalsortinginjava</artifactId>
+            <version>0.1.9</version>
+        </dependency>
+
     </dependencies>
 
 </project>
