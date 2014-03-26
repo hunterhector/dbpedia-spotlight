@@ -530,6 +530,11 @@ object ExtractCandidateMap
   }
 
   def main(args : Array[String]) {
+    //different from the method in the main branch, here it tried to do most of the work previously defined in the script
+    //including generating occs.tsv, sorting it, and process the surface mappings
+    //To run this include one more arg for the occs.tsv path, as the command below:
+    //mvn scala:run -Dlauncher=ExtractCandidateMap "-DjavaOpts.Xmx=$JAVA_XMX" "-DaddArgs=$INDEX_CONFIG_FILE|$DBPEDIA_WORKSPACE/data/output/occs.tsv"
+
     val indexingConfigFileName = args(0)
     val targetOccsFile = args(1)
     val config = new IndexingConfiguration(indexingConfigFileName)
