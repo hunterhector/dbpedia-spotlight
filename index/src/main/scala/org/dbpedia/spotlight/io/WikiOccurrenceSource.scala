@@ -73,7 +73,7 @@ object WikiOccurrenceSource
       new WikiOccurrenceSource(
         new MemorySource(
           testFile.map{ line =>
-            new WikiPage(new WikiTitle("Test Paragraph", Namespace.Main, Language.English), line.trim())
+            new WikiPage(new WikiTitle("Test Paragraph", Namespace.Main, Language.English, false, null), line.trim())
           }.toTraversable.asInstanceOf[scala.collection.immutable.Traversable[org.dbpedia.extraction.sources.WikiPage]]
         )
       )
@@ -84,8 +84,8 @@ object WikiOccurrenceSource
      */
     private class WikiOccurrenceSource(wikiPages : Source) extends OccurrenceSource
     {
-        val wikiParser = WikiParser()
-//      val wikiParser = SimpleWikiParser
+//        val wikiParser = WikiParser()
+          val wikiParser = WikiParser.getInstance()
 
         override def foreach[U](f : DBpediaResourceOccurrence => U) : Unit =
         {
@@ -98,7 +98,7 @@ object WikiOccurrenceSource
                 val cleanSource = WikiMarkupStripper.stripEverything(wikiPage.source)
 
                 // parse the (clean) wiki page
-                val pageNode = wikiParser( WikiPageUtil.copyWikiPage(wikiPage, cleanSource) )
+                val pageNode = wikiParser( WikiPageUtil.copyWikiPage(wikiPage, cleanSource) ).get
 
                 // exclude redirect and disambiguation pages
                 if (!pageNode.isRedirect && !pageNode.isDisambiguation) {

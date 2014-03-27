@@ -57,10 +57,11 @@ object WikiPageContextSource
      */
     private class WikipediaPageContextSource(wikiPages : Source) extends WikiPageSource
     {
-        val wikiParser = WikiParser()
-//      val wikiParser = SimpleWikiParser
+//        val wikiParser = WikiParser()
+          val wikiParser = WikiParser.getInstance()
 
-        override def foreach[U](f : WikiPageContext => U) : Unit =
+
+      override def foreach[U](f : WikiPageContext => U) : Unit =
         {
             for (wikiPage <- wikiPages)
             {
@@ -68,7 +69,7 @@ object WikiPageContextSource
                 val cleanSource = WikiMarkupStripper.stripEverything(wikiPage.source)
 
                 // parse the (clean) wiki page
-                val pageNode = wikiParser( WikiPageUtil.copyWikiPage(wikiPage, cleanSource) )
+                val pageNode = wikiParser( WikiPageUtil.copyWikiPage(wikiPage, cleanSource) ).get
 
                 // exclude redirects, disambiguation pages and other undesired pages (e.g. Lists)
                 if (!pageNode.isRedirect && !pageNode.isDisambiguation)

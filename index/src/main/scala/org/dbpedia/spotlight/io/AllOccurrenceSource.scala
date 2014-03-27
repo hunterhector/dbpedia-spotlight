@@ -69,8 +69,8 @@ object AllOccurrenceSource
    */
   private class AllOccurrenceSource(wikiPages : Source, multiplyDisambigs : Int=MULTIPLY_DISAMBIGUATION_CONTEXT) extends OccurrenceSource
   {
-    val wikiParser = WikiParser()
-//    val wikiParser = WikiParser.getInstance()
+//    val wikiParser = WikiParser()
+    val wikiParser = WikiParser.getInstance()
 
     override def foreach[U](f : DBpediaResourceOccurrence => U) : Unit =
     {
@@ -80,7 +80,7 @@ object AllOccurrenceSource
       for (wikiPage <- wikiPages)
       {
         try {
-          var pageNode = wikiParser( wikiPage )
+          var pageNode = wikiParser( wikiPage ).get
 
           // disambiguations
           if (pageNode.isDisambiguation) {
@@ -88,7 +88,7 @@ object AllOccurrenceSource
             val cleanSource = WikiMarkupStripper.stripEverythingButBulletPoints(wikiPage.source)
 
             // parse the (clean) wiki page
-            pageNode = wikiParser( WikiPageUtil.copyWikiPage(wikiPage, cleanSource) )
+            pageNode = wikiParser( WikiPageUtil.copyWikiPage(wikiPage, cleanSource) ).get
 
             val surfaceForm = new SurfaceForm(
               wikiPage.title.decoded.replace(" (disambiguation)", "").replaceAll("""^(The|A) """, ""))   //TODO i18n
@@ -119,7 +119,7 @@ object AllOccurrenceSource
             val cleanSource = WikiMarkupStripper.stripEverything(wikiPage.source)
 
             // parse the (clean) wiki page
-            pageNode = wikiParser( WikiPageUtil.copyWikiPage(wikiPage, cleanSource) )
+            pageNode = wikiParser( WikiPageUtil.copyWikiPage(wikiPage, cleanSource) ).get
 
             // split the page node into paragraphs
             val paragraphs = NodeUtil.splitNodes(pageNode.children, splitParagraphsRegex)

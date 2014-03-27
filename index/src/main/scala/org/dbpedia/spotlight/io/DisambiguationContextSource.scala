@@ -76,7 +76,8 @@ object DisambiguationContextSource
     {
         val splitDisambiguations = """\n"""
         
-        val wikiParser = WikiParser()
+//        val wikiParser = WikiParser()
+        val wikiParser = WikiParser.getInstance()
 
         override def foreach[U](f : DBpediaResourceOccurrence => U) : Unit =
         {
@@ -89,7 +90,7 @@ object DisambiguationContextSource
                 val cleanSource = WikiMarkupStripper.stripEverythingButBulletPoints(wikiPage.source)
 
                 // parse the (clean) wiki page
-                val pageNode = wikiParser( WikiPageUtil.copyWikiPage(wikiPage, cleanSource) )
+                val pageNode = wikiParser( WikiPageUtil.copyWikiPage(wikiPage, cleanSource) ).get
 
                 if (pageNode.isDisambiguation) {
                     val surfaceForm = new SurfaceForm(wikiPage.title.decoded.replace(" (disambiguation)", "")) //TODO language-specific
