@@ -96,9 +96,10 @@ object ExtractOccsFromWikipedia {
       wikiDumpFileName = BzipUtils.extract(wikiDumpFileName)
     }
 
-    SpotlightLog.info(this.getClass, "Fixing invalid namespaces in the input dump %s ...", wikiDumpFileName)
-    fixNamespaceError(wikiDumpFileName)
-    SpotlightLog.info(this.getClass, "Done.")
+// Use 4.0-Snapshot of the extraction framework
+//    SpotlightLog.info(this.getClass, "Fixing invalid namespaces in the input dump %s ...", wikiDumpFileName)
+//    fixNamespaceError(wikiDumpFileName)
+//    SpotlightLog.info(this.getClass, "Done.")
 
     val conceptUriFilter = UriWhitelistFilter.fromFile(new File(conceptURIsFileName))
 
