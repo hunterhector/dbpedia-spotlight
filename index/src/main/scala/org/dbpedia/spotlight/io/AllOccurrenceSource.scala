@@ -145,7 +145,6 @@ object AllOccurrenceSource
         } catch {
           case e: Exception => SpotlightLog.info(this.getClass, "Skipping invalid page.")
           case e: NoSuchElementException => SpotlightLog.info(this.getClass, "Skipping invalid page.")
-          case e: InvocationTargetException => SpotlightLog.info(this.getClass, "Skipping invalid page.")
           case _ => SpotlightLog.info(this.getClass, "Skipping invalid page.")
         }
 
