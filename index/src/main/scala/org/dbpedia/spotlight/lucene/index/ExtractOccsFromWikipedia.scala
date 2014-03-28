@@ -56,12 +56,22 @@ object ExtractOccsFromWikipedia {
         val badNS = pattern.findFirstMatchIn(line.toString).get.group("nameSpace")
         if (badNS != null) {
           if (badNS.toInt == 828 ) {
+            SpotlightLog.info(this.getClass, "Fix namespace 828")
             fixedOccsStream.println(line.replace("828","0"))
           }else if (badNS.toInt == 118  ){
+            SpotlightLog.info(this.getClass, "Fix namespace 118")
             fixedOccsStream.println(line.replace("118","0"))
           }else if(badNS.toInt == 119){
+            SpotlightLog.info(this.getClass, "Fix namespace 119")
             fixedOccsStream.println(line.replace("119","0"))
-          }else {
+          }else if (badNS.toInt == 710){
+            SpotlightLog.info(this.getClass, "Fix namespace 710")
+            fixedOccsStream.println(line.replace("710","0"))
+          }else if (badNS.toInt == 710){
+            SpotlightLog.info(this.getClass, "Fix namespace 711")
+            fixedOccsStream.println(line.replace("711","0"))
+          }
+          else {
             fixedOccsStream.println(line)
           }
         }
